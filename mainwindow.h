@@ -30,7 +30,7 @@ private:
     Ui::MainWindow *ui;
 
     QTcpServer *tcpServer;
-    QTcpSocket *tcpCliente[2];
+    QTcpSocket *tcpCliente;
 };
 
 #endif // MAINWINDOW_H

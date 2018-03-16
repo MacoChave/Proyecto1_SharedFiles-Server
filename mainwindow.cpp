@@ -9,8 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
     tcpServer = new QTcpServer(this);
     tcpServer->setMaxPendingConnections(2);
 
-    for (int i = 0; i < tcpServer->maxPendingConnections(); i++)
-        tcpCliente[i] = new QTcpSocket(this);
+    tcpCliente = new QTcpSocket(this);
 
     tcpServer->listen(QHostAddress::LocalHost, 1234);
     connect(
@@ -28,42 +27,32 @@ MainWindow::~MainWindow()
 
 void MainWindow::nuevaConexion()
 {
-    static int j = 0;
-    tcpCliente[j] = tcpServer->nextPendingConnection();
+    tcpCliente = tcpServer->nextPendingConnection();
     connect(
-                tcpCliente[j],
+                tcpCliente,
                 SIGNAL (readyRead()),
                 this,
                 SLOT (leerSocketCliente())
             );
-    j++;
 }
 
 void MainWindow::leerSocketCliente()
 {
-    if (tcpCliente[0]->bytesAvailable() > 0)
+    if (tcpCliente->bytesAvailable() > 0)
     {
         QByteArray buffer;
-        buffer.resize(tcpCliente[0]->bytesAvailable());
-        tcpCliente[0]->read(buffer.data(), buffer.size());
+        buffer.resize(tcpCliente->bytesAvailable());
+        tcpCliente->read(buffer.data(), buffer.size());
         ui->edtLog->append((QString) buffer);
         qDebug() << (QString) buffer;
     }
-    else if (tcpCliente[1]->bytesAvailable() > 0)
-    {
-        QByteArray buffer;
-        buffer.resize(tcpCliente[1]->bytesAvailable());
-        tcpCliente[1]->read(buffer.data(), buffer.size());
-        qDebug() << (QString) buffer;
-    }
-    else
-        qDebug() << "No se puede conectarse con el servidor";
 }
 
 void MainWindow::on_btnMensaje_clicked()
 {
-    tcpCliente[0]->write(
+    tcpCliente->write(
                 ui->edtMensaje->text().toLatin1().data(),
                 ui->edtMensaje->text().size()
             );
+    ui->edtMensaje->clear();
 }
