@@ -15,6 +15,8 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    Lista/list.h \
+    Lista/node.h
 
 FORMS    += mainwindow.ui
