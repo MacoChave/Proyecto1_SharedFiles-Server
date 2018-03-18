@@ -75,11 +75,15 @@ void MainWindow::interpretarMensaje(QString mensaje)
     }
     else if (mensaje.startsWith("LOGUP"))
     {
-
+        out << "***** LOGUP *****" << "\n* NICKNAME\n\t";
+        out << lstMsg[1] << "\n* PASSWORD\n\t";
+        out << lstMsg[2] << "\n* NOMBRE\n\t";
+        out << lstMsg[3] << "\n* CORREO\n\t";
+        out<< lstMsg[4] << "\n ******************** \n";
+        flush(out);
     }
     else if (mensaje.startsWith("LOGOUT"))
     {
-
     }
     ui->edtLog->append(log);
 }
