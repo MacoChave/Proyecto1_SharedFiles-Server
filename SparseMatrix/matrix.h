@@ -17,6 +17,9 @@ public:
     Matrix();
     ~Matrix();
 
+    List<TADColumn *> *getHeaderColumn();
+    List<TADRow *> *getHeaderRow();
+
     /* MODIFICADORES */
     void insert(TADMatrixNode *value);
     void erase(QString archivo, QString nickname);

@@ -25,6 +25,7 @@ public:
     QString getPassword();
 
     int compare(TADRow *row);
+    int comparePass(TADRow *row);
     RowList *getInternalRow();
     MatrixNode *addInternalRow(MatrixNode *value);
     QString toString();

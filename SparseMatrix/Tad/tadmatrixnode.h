@@ -9,14 +9,14 @@ class TADMatrixNode
     QString archivo;
     int permiso;
 
-    enum
-    {
-        DUENIO, EDITAR, VER
-    };
 public:
     TADMatrixNode();
     TADMatrixNode(QString _nickname, QString _archivo, int _permiso);
     ~TADMatrixNode();
+    enum
+    {
+        DUENIO, EDITAR, VER
+    };
 
     QString getNickname();
     void setNickname(QString value);
