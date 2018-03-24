@@ -5,13 +5,16 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QHostAddress>
+
 #include <QDebug>
 #include <QFileDialog>
 #include <QFile>
+
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonValue>
+
 #include "SparseMatrix/matrix.h"
 
 namespace Ui {
@@ -36,7 +39,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    TADRow *user;
+    TADRow *currentUserSession;
     Matrix *matrix;
 
     QJsonDocument jsd;
@@ -45,6 +48,7 @@ private:
     QTcpSocket *tcpCliente;
 
     void interpretarMensaje(QString mensaje);
+
     bool cargarUsuario();
     bool cargarArchivo();
     void graficar();
