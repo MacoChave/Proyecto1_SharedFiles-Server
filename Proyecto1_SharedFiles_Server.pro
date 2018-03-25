@@ -13,8 +13,26 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    SparseMatrix/matrix.cpp \
+    SparseMatrix/Interno/columnlist.cpp \
+    SparseMatrix/Interno/matrixnode.cpp \
+    SparseMatrix/Interno/rowlist.cpp \
+    SparseMatrix/Tad/tadcolumn.cpp \
+    SparseMatrix/Tad/tadmatrixnode.cpp \
+    SparseMatrix/Tad/tadrow.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    Lista/list.h \
+    Lista/node.h \
+    SparseMatrix/matrix.h \
+    SparseMatrix/Interno/columnlist.h \
+    SparseMatrix/Interno/matrixnode.h \
+    SparseMatrix/Interno/rowlist.h \
+    SparseMatrix/MatrixHeader/headercolumn.h \
+    SparseMatrix/MatrixHeader/headerrow.h \
+    SparseMatrix/Tad/tadcolumn.h \
+    SparseMatrix/Tad/tadmatrixnode.h \
+    SparseMatrix/Tad/tadrow.h
 
 FORMS    += mainwindow.ui

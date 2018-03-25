@@ -6,6 +6,7 @@
 #include <QTcpSocket>
 #include <QHostAddress>
 #include <QDebug>
+#include "SparseMatrix/matrix.h"
 
 namespace Ui {
 class MainWindow;
@@ -28,9 +29,12 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    Matrix *matrix;
 
     QTcpServer *tcpServer;
     QTcpSocket *tcpCliente;
+
+    void interpretarMensaje(QString mensaje);
 };
 
 #endif // MAINWINDOW_H

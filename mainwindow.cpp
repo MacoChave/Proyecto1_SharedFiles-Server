@@ -6,6 +6,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    matrix = new Matrix();
+
     tcpServer = new QTcpServer(this);
     tcpServer->setMaxPendingConnections(2);
 
@@ -43,8 +45,8 @@ void MainWindow::leerSocketCliente()
         QByteArray buffer;
         buffer.resize(tcpCliente->bytesAvailable());
         tcpCliente->read(buffer.data(), buffer.size());
-        ui->edtLog->append((QString) buffer);
         qDebug() << (QString) buffer;
+        interpretarMensaje((QString) buffer);
     }
 }
 
@@ -55,4 +57,29 @@ void MainWindow::on_btnMensaje_clicked()
                 ui->edtMensaje->text().size()
             );
     ui->edtMensaje->clear();
+}
+
+void MainWindow::interpretarMensaje(QString mensaje)
+{
+    QString log;
+    QStringList lstMsg = mensaje.split("^");
+    qDebug() << lstMsg;
+    QTextStream out(&log);
+
+    if (mensaje.startsWith("LOGIN"))
+    {
+        out << "***** LOGIN *****" << "\n* NICKNAME\n\t";
+        out << lstMsg[1] << "\n* PASSWORD\n\t";
+        out<< lstMsg[2] << "\n ******************** \n";
+        flush(out);
+    }
+    else if (mensaje.startsWith("LOGUP"))
+    {
+
+    }
+    else if (mensaje.startsWith("LOGOUT"))
+    {
+
+    }
+    ui->edtLog->append(log);
 }
