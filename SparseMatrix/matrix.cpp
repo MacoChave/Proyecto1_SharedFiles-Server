@@ -28,6 +28,16 @@ Matrix::~Matrix()
     qInfo() << "Memoria de matriz limpia :D";
 }
 
+List<TADColumn *> *Matrix::getHeaderColumn()
+{
+    return headerColumns;
+}
+
+List<TADRow *> *Matrix::getHeaderRow()
+{
+    return headerRows;
+}
+
 void Matrix::insert(TADMatrixNode *value)
 {
     TADColumn *column = new TADColumn(value->getArchivo());

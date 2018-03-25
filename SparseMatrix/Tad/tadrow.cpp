@@ -82,6 +82,11 @@ int TADRow::compare(TADRow *row)
     return nickname.compare(row->getNickname());
 }
 
+int TADRow::comparePass(TADRow *row)
+{
+    return password.compare(row->getPassword());
+}
+
 RowList *TADRow::getInternalRow()
 {
     return internalRow;

@@ -74,7 +74,19 @@ QString TADMatrixNode::getNodeName()
 
 QString TADMatrixNode::toString()
 {
-    QString str(permiso);
+    QString str;
+
+    switch (permiso) {
+    case DUENIO:
+        str = "Dueño";
+        break;
+    case VER:
+        str = "Ver";
+        break;
+    case EDITAR:
+        str = "Editar";
+        break;
+    }
 
     return str;
 }

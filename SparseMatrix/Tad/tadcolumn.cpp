@@ -1,15 +1,15 @@
 #include "tadcolumn.h"
 
-TADColumn::TADColumn()
+TADColumn::TADColumn(QString _nombre, int _tipo, QString _fechaCreacion, QString _nickDuenio, QString _fechaCambio, QString _nickCambio, QString _filepath)
 {
-    nombre = "";
-    tipo = 0;
-    fechaCreacion = "";
-    nickCreacion = "";
-    fechaUltimoCambio = "";
-    nickUltimoCambio = "";
-    disponible = false;
-    filepath = "";
+    nombre = _nombre;
+    tipo = _tipo;
+    fechaCreacion = _fechaCreacion;
+    nickCreacion = _nickDuenio;
+    fechaUltimoCambio = _fechaCambio;
+    nickUltimoCambio = _nickCambio;
+    disponible = true;
+    filepath = _filepath;
     internalColumn = new ColumnList();
 }
 

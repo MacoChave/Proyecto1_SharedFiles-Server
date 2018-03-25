@@ -14,10 +14,15 @@ class TADColumn
     QString filepath;
     ColumnList *internalColumn;
 public:
-    TADColumn();
+    TADColumn(QString _nombre, int _tipo, QString _fechaCreacion, QString _nickDuenio, QString _fechaCambio, QString _nickCambio, QString _filepath);
     TADColumn(QString _nombre, int _tipo, QString _fecha, QString _nickDuenio, QString _filepath);
     TADColumn(QString _nombre);
     ~TADColumn();
+
+    enum
+    {
+        DOCUMENTO, PRESENTACION, LIENZO
+    };
 
     void setNombre(QString value);
     QString getNombre();

@@ -6,27 +6,37 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    currentUserSession = NULL;
     matrix = new Matrix();
 
     tcpServer = new QTcpServer(this);
-    tcpServer->setMaxPendingConnections(2);
+    tcpServer->setMaxPendingConnections(1);
 
     tcpCliente = new QTcpSocket(this);
 
-    tcpServer->listen(QHostAddress::LocalHost, 1234);
-    connect(
-                tcpServer,
-                SIGNAL (newConnection()),
-                this,
-                SLOT (nuevaConexion())
-            );
+    if (!tcpServer->listen(QHostAddress::Any, 1234))
+        qDebug() << tcpCliente->errorString();
+    else
+    {
+        qDebug() << "Servidor iniciado";
+        connect(
+                    tcpServer,
+                    SIGNAL (newConnection()),
+                    this,
+                    SLOT (nuevaConexion())
+                );
+    }
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete matrix;
 }
 
+/***********************************************************************************
+ * MANEJO DE CONEXION SERVIDOR
+ **********************************************************************************/
 void MainWindow::nuevaConexion()
 {
     tcpCliente = tcpServer->nextPendingConnection();
@@ -34,11 +44,11 @@ void MainWindow::nuevaConexion()
                 tcpCliente,
                 SIGNAL (readyRead()),
                 this,
-                SLOT (leerSocketCliente())
+                SLOT (consumer())
             );
 }
 
-void MainWindow::leerSocketCliente()
+void MainWindow::consumer()
 {
     if (tcpCliente->bytesAvailable() > 0)
     {
@@ -47,16 +57,17 @@ void MainWindow::leerSocketCliente()
         tcpCliente->read(buffer.data(), buffer.size());
         qDebug() << (QString) buffer;
         interpretarMensaje((QString) buffer);
+
+        ui->edtLog->append((QString) buffer);
     }
 }
 
-void MainWindow::on_btnMensaje_clicked()
+void MainWindow::producer(QString value)
 {
     tcpCliente->write(
-                ui->edtMensaje->text().toLatin1().data(),
-                ui->edtMensaje->text().size()
+                value.toLatin1().data(),
+                value.size()
             );
-    ui->edtMensaje->clear();
 }
 
 void MainWindow::interpretarMensaje(QString mensaje)
@@ -70,16 +81,346 @@ void MainWindow::interpretarMensaje(QString mensaje)
     {
         out << "***** LOGIN *****" << "\n* NICKNAME\n\t";
         out << lstMsg[1] << "\n* PASSWORD\n\t";
-        out<< lstMsg[2] << "\n ******************** \n";
+        out << lstMsg[2] << "\n ******************** \n";
         flush(out);
+
+        TADRow *rowTemp = new TADRow();
+        rowTemp->setNickname(lstMsg[1]);
+        rowTemp->setPassword(lstMsg[2]);
+
+        Node<TADRow *> *row = matrix->getHeaderRow()->get(rowTemp);
+        if (row != NULL)
+        {
+            if (row->getData()->comparePass(rowTemp) == 0)
+            {
+                currentUserSession = row->getData();
+                producer("LOGIN^CORRECTO");
+                out << "CORRECTO" << "\n ******************** \n";
+            }
+            else
+            {
+                producer("LOGIN^INCORRECTO");
+                out << "INCORRECTO" << "\n ******************** \n";
+            }
+        }
+        else
+        {
+            producer("LOGIN^INCORRECTO");
+            out << "INCORRECTO" << "\n ******************** \n";
+        }
+
+        flush(out);
+        delete rowTemp;
+        rowTemp = NULL;
     }
     else if (mensaje.startsWith("LOGUP"))
     {
+        out << "******** LOGUP ********" << "\n* NICKNAME\n\t";
+        out << lstMsg[1] << "\n* PASSWORD\n\t";
+        out << lstMsg[2] << "\n* NOMBRE\n\t";
+        out << lstMsg[3] << "\n* CORREO\n\t";
+        out << lstMsg[4] << "\n ******************** \n\t";
+        flush(out);
 
+        TADRow *rowTemp = new TADRow(lstMsg[3], lstMsg[4], lstMsg[1], lstMsg[2]);
+        if (matrix->getHeaderRow()->get(rowTemp) != NULL)
+        {
+            producer("LOGUP^INCORRECTO");
+            out << "INCORRECTO" << "\n ******************** \n";
+
+            delete rowTemp;
+            rowTemp = NULL;
+        }
+        else
+        {
+            if (matrix->getHeaderRow()->insert(rowTemp) != NULL)
+            {
+                producer("LOGUP^CORRECTO");
+                out << "CORRECTO" << "\n ******************** \n";
+            }
+            else
+            {
+                producer("LOGUP^INCORRECTO");
+                out << "INCORRECTO" << "\n ******************** \n";
+
+                delete rowTemp;
+                rowTemp = NULL;
+            }
+        }
+
+        flush(out);
     }
     else if (mensaje.startsWith("LOGOUT"))
     {
+        currentUserSession = NULL;
 
+        flush(out);
+        out << "******** LOGUP ********\t";
+        out << "CORRECTO" << "\n ******************** \n";
+    }
+    else if (mensaje.startsWith("SESSION"))
+    {
+        out << "******** SESSION ********\t";
+        if (currentUserSession != NULL)
+        {
+            QString currentUser("SESSION^");
+            currentUser.append(currentUserSession->getNickname());
+            producer(currentUser);
+            out << currentUserSession->getNickname() << "\n ******************** \n";
+        }
+        else
+        {
+            out << "INACTIVO" << "\n ******************** \n";
+        }
+    }
+    else if (mensaje.startsWith("LISTDOCS"))
+    {
+        /* VALIDAR EXISTENCIA DE NODOS */
+        if (matrix->getHeaderColumn()->isEmpty())
+        {
+            producer("LISTDOCS");
+
+            return;
+        }
+
+        /* NODOS TAD TEMPORALES */
+        Node<TADColumn *> *nodeColumnTemporal = NULL;
+        MatrixNode *matrixNodeTemporal = NULL;
+        TADColumn *tadColumnaTemporal = NULL;
+        TADMatrixNode *tadMatrixNodeTemporal = NULL;
+
+        /* IGUALAR NODOS TAD TEMPORALES */
+        nodeColumnTemporal = matrix->getHeaderColumn()->first();
+        matrixNodeTemporal = currentUserSession->getInternalRow()->first();
+
+        /* RECORRER NODOS, VALIDANDO PRESENCIA DE USUARIO ACTUAL */
+        while (nodeColumnTemporal != NULL || matrixNodeTemporal != NULL)
+        {
+            tadColumnaTemporal = nodeColumnTemporal->getData();
+            tadMatrixNodeTemporal = matrixNodeTemporal->getData();
+
+            if (tadColumnaTemporal->getNombre().compare(tadMatrixNodeTemporal->getArchivo()) == 0)
+            {
+                QString result("LLISTDOCS^");
+                result.append(tadMatrixNodeTemporal->getArchivo());
+                result.append("^");
+
+                if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->DOCUMENTO)
+                    result.append("Documento");
+                else if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->LIENZO)
+                    result.append("Lienzo");
+                else if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->PRESENTACION)
+                    result.append("Presentación");
+
+                result.append("^");
+
+                if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->DUENIO)
+                    result.append("Dueño");
+                else if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->EDITAR)
+                    result.append("Editar");
+                else if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->VER)
+                    result.append("Ver");
+
+                producer(result);
+                nodeColumnTemporal = nodeColumnTemporal->getNext();
+                matrixNodeTemporal = matrixNodeTemporal->getNext();
+
+                tadColumnaTemporal = NULL;
+                tadMatrixNodeTemporal = NULL;
+            }
+            else
+            {
+                nodeColumnTemporal = nodeColumnTemporal->getNext();
+            }
+        }
+    }
+    else if (mensaje.startsWith("INFODOC"))
+    {
+        /* VALIDAR EXISTENCIA DE ARCHIVOS */
+        if (matrix->getHeaderColumn()->isEmpty())
+        {
+            producer("INFODOC");
+
+            return;
+        }
+
+        /* NODOS TAD TEMPORAL */
+        TADColumn *tadColumnaTemporal = new TADColumn(lstMsg[1]);
+
+        /* NODOS RESULTADO BUSQUEDA */
+        TADColumn *tadColumnResult = matrix->getHeaderColumn()->get(tadColumnaTemporal)->getData();
+        if (tadColumnResult != NULL)
+        {
+            QString result("INFODOC^");
+            result.append(tadColumnResult->getFilePath());
+
+            producer(result);
+        }
+
+        delete tadColumnaTemporal;
+        tadColumnaTemporal = NULL;
+    }
+    else if (mensaje.startsWith("CREATEDOCS"))
+    {
+        // CREAR ARCHIVO Y NODO MATRIZ PARA USUARIO ACTUAL
+    }
+    else if (mensaje.startsWith("UPDATEDOCS"))
+    {
+        // BUACAR ARCHIVO Y ACTUALIZAR
+    }
+    else if (mensaje.startsWith("DELETEDOCS"))
+    {
+        // ELIMINAR ARCHIVO Y SU LISTA INTERNA.
+        // ELIMINAR NODO MATRIZ DE TODOS LOS USUARIOS QUE TENGAN ESE ARCHIVO
     }
     ui->edtLog->append(log);
+}
+
+/***********************************************************************************
+ * MANEJO DE CARGA DE ARCHIVOS JSON
+ **********************************************************************************/
+bool MainWindow::cargarUsuario()
+{
+    if (jsd.isEmpty())
+        return false;
+
+    QJsonArray jsa = jsd.array();
+
+    for (int i = 0; i < jsa.count(); i++)
+    {
+        QJsonObject jso = jsa.at(i).toObject();
+        QString nombre = jso["nombre"].toString();
+        QString correo = jso["correo"].toString();
+        QString nick = jso["nickname"].toString();
+        QString pass = jso["clave"].toString();
+
+        TADRow *row = new TADRow(nombre, correo, nick, pass);
+        matrix->getHeaderRow()->insert(row);
+    }
+    return true;
+}
+
+bool MainWindow::cargarArchivo()
+{
+    if (jsd.isEmpty())
+        return false;
+
+    QJsonArray jsa = jsd.array();
+
+    for (int i = 0; i < jsa.count(); i++)
+    {
+        TADRow *row = NULL, *rowTemp = NULL;
+        TADMatrixNode *duenio = NULL;
+        MatrixNode *nodo = NULL;
+
+        QJsonObject jso = jsa.at(i).toObject();
+
+        QString nombre = jso["nombre"].toString();
+        QString tipo = jso["tipo"].toString();
+        QString fechaCreacion = jso["fecha_creacion"].toString();
+        QString nickCreacion = jso["creador"].toString();
+        QString fechaUltimoCambio = jso["fecha_modificacion"].toString();
+        QString nickUltimoCambio = jso["modificador"].toString();
+        QString filepath = jso["ruta_contenido"].toString();
+        QJsonArray jsaPermiso = jso["permisos"].toArray();
+
+        TADColumn *column = new TADColumn(
+                        nombre, -1, fechaCreacion, nickCreacion,
+                        fechaUltimoCambio, nickUltimoCambio,
+                        filepath
+                    );
+        if (tipo.compare("documento") == 0)
+            column->setTipo(column->DOCUMENTO);
+        else if (tipo.compare("presentacion") == 0)
+            column->setTipo(column->PRESENTACION);
+        else if (tipo.compare("lienzo") == 0)
+            column->setTipo(column->LIENZO);
+
+        matrix->getHeaderColumn()->insert(column);
+
+        rowTemp = new TADRow();
+        rowTemp->setNickname(nickCreacion);
+        row = matrix->getHeaderRow()->get(rowTemp)->getData();
+
+        delete rowTemp;
+        rowTemp = NULL;
+
+        duenio = new TADMatrixNode(nickCreacion, nombre, -1);
+        duenio->setPermiso(duenio->DUENIO);
+
+        nodo = new MatrixNode(duenio);
+        column->addInternalColumn(nodo);
+        row->addInternalRow(nodo);
+
+        for (int j = 0; j < jsaPermiso.count(); j++)
+        {
+            QJsonObject jsoPermiso = jsaPermiso.at(j).toObject();
+
+            QString usuario = jsoPermiso["usuario"].toString();
+            QString permiso = jsoPermiso["permiso"].toString();
+
+            TADMatrixNode *tadMatrixNode = new TADMatrixNode(usuario, nombre, -1);
+            if (permiso.compare("editar") == 0)
+                tadMatrixNode->setPermiso(tadMatrixNode->EDITAR);
+            else if (permiso.compare("ver") == 0)
+                tadMatrixNode->setPermiso(tadMatrixNode->VER);
+
+            rowTemp = new TADRow();
+            rowTemp->setNickname(usuario);
+            row = matrix->getHeaderRow()->get(rowTemp)->getData();
+
+            delete rowTemp;
+            rowTemp = NULL;
+
+            nodo = new MatrixNode(tadMatrixNode);
+            column->addInternalColumn(nodo);
+            row->addInternalRow(nodo);
+        }
+    }
+    return true;
+}
+
+void MainWindow::graficar()
+{
+    matrix->graph("Matriz");
+}
+
+void MainWindow::on_btnMensaje_clicked()
+{
+//    graficar();
+//    producer(ui->edtMensaje->text());
+//    ui->edtMensaje->clear();
+
+//    QString filename;
+    /* ARCHIVO USUARIOS */
+//    filename = QFileDialog::getOpenFileName(
+//                this,
+//                "Selector de archivos",
+//                "/home/marco/Escritorio",
+//                "Archivo JSON(*.json)");
+//    QFile file(filename);
+//    if (!file.open(QFile::ReadOnly))
+//        return;
+
+//    jsd = QJsonDocument::fromJson(file.readAll());
+//    file.close();
+//    if (!cargarUsuario())
+//        return;
+
+    /* ARCHIVO ARCHIVOS */
+//    filename = QFileDialog::getOpenFileName(
+//                this,
+//                "Selector de archivos",
+//                "/home/marco/Escritorio",
+//                "Archivos JSON(*.json)");
+//    file.setFileName(filename);
+//    if (!file.open(QFile::ReadOnly))
+//        return;
+
+//    jsd = QJsonDocument::fromJson(file.readAll());
+//    file.close();
+//    if (!cargarArchivo())
+//        return;
+
+//    graficar();
 }
