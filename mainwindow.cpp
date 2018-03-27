@@ -26,6 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
                     SLOT (nuevaConexion())
                 );
     }
+
+    cargar();
 }
 
 MainWindow::~MainWindow()
@@ -154,9 +156,9 @@ void MainWindow::interpretarMensaje(QString mensaje)
     {
         currentUserSession = NULL;
 
-        flush(out);
         out << "******** LOGUP ********\t";
         out << "CORRECTO" << "\n ******************** \n";
+        flush(out);
     }
     else if (mensaje.startsWith("SESSION"))
     {
@@ -172,6 +174,7 @@ void MainWindow::interpretarMensaje(QString mensaje)
         {
             out << "INACTIVO" << "\n ******************** \n";
         }
+        flush(out);
     }
     else if (mensaje.startsWith("LISTDOCS"))
     {
@@ -179,6 +182,7 @@ void MainWindow::interpretarMensaje(QString mensaje)
         if (matrix->getHeaderColumn()->isEmpty())
         {
             producer("LISTDOCS");
+            flush(out);
 
             return;
         }
@@ -194,6 +198,7 @@ void MainWindow::interpretarMensaje(QString mensaje)
         matrixNodeTemporal = currentUserSession->getInternalRow()->first();
 
         /* RECORRER NODOS, VALIDANDO PRESENCIA DE USUARIO ACTUAL */
+        QString result("LISTDOCS^");
         while (nodeColumnTemporal != NULL || matrixNodeTemporal != NULL)
         {
             tadColumnaTemporal = nodeColumnTemporal->getData();
@@ -201,7 +206,6 @@ void MainWindow::interpretarMensaje(QString mensaje)
 
             if (tadColumnaTemporal->getNombre().compare(tadMatrixNodeTemporal->getArchivo()) == 0)
             {
-                QString result("LLISTDOCS^");
                 result.append(tadMatrixNodeTemporal->getArchivo());
                 result.append("^");
 
@@ -210,18 +214,18 @@ void MainWindow::interpretarMensaje(QString mensaje)
                 else if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->LIENZO)
                     result.append("Lienzo");
                 else if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->PRESENTACION)
-                    result.append("Presentación");
+                    result.append("Presentacipn");
 
                 result.append("^");
 
                 if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->DUENIO)
-                    result.append("Dueño");
+                    result.append("Dueno");
                 else if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->EDITAR)
                     result.append("Editar");
                 else if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->VER)
                     result.append("Ver");
 
-                producer(result);
+                result.append("^");
                 nodeColumnTemporal = nodeColumnTemporal->getNext();
                 matrixNodeTemporal = matrixNodeTemporal->getNext();
 
@@ -232,7 +236,11 @@ void MainWindow::interpretarMensaje(QString mensaje)
             {
                 nodeColumnTemporal = nodeColumnTemporal->getNext();
             }
+            flush(out);
         }
+
+        producer(result);
+        qDebug() << result;
     }
     else if (mensaje.startsWith("INFODOC"))
     {
@@ -257,6 +265,7 @@ void MainWindow::interpretarMensaje(QString mensaje)
             producer(result);
         }
 
+        flush(out);
         delete tadColumnaTemporal;
         tadColumnaTemporal = NULL;
     }
@@ -279,6 +288,46 @@ void MainWindow::interpretarMensaje(QString mensaje)
 /***********************************************************************************
  * MANEJO DE CARGA DE ARCHIVOS JSON
  **********************************************************************************/
+void MainWindow::cargar()
+{
+        QString filename("Files/usuarios.json");
+
+        /* ARCHIVO USUARIOS */
+        QFile file(filename);
+        if (!file.open(QFile::ReadOnly))
+        {
+            qDebug() << "Archivo 'usuarios.json' no abierto";
+            return;
+        }
+        qDebug() << "Archivo 'usuarios.json' abierto";
+
+        jsd = QJsonDocument::fromJson(file.readAll());
+        file.close();
+        if (!cargarUsuario())
+        {
+            qDebug() << "No se pudo cargar los usuarios";
+            return;
+        }
+
+        /* ARCHIVO ARCHIVOS */
+        filename = "Files/archivos.json";
+        file.setFileName(filename);
+        if (!file.open(QFile::ReadOnly))
+        {
+            qDebug() << "Archivo 'archivos.json' no abierto";
+            return;
+        }
+        qDebug() << "Archivo 'archivos.json' abierto";
+
+        jsd = QJsonDocument::fromJson(file.readAll());
+        file.close();
+        if (!cargarArchivo())
+        {
+            qDebug() << "No se pudo cargar los archivos";
+            return;
+        }
+}
+
 bool MainWindow::cargarUsuario()
 {
     if (jsd.isEmpty())
@@ -387,40 +436,8 @@ void MainWindow::graficar()
 
 void MainWindow::on_btnMensaje_clicked()
 {
-//    graficar();
 //    producer(ui->edtMensaje->text());
 //    ui->edtMensaje->clear();
 
-//    QString filename;
-    /* ARCHIVO USUARIOS */
-//    filename = QFileDialog::getOpenFileName(
-//                this,
-//                "Selector de archivos",
-//                "/home/marco/Escritorio",
-//                "Archivo JSON(*.json)");
-//    QFile file(filename);
-//    if (!file.open(QFile::ReadOnly))
-//        return;
-
-//    jsd = QJsonDocument::fromJson(file.readAll());
-//    file.close();
-//    if (!cargarUsuario())
-//        return;
-
-    /* ARCHIVO ARCHIVOS */
-//    filename = QFileDialog::getOpenFileName(
-//                this,
-//                "Selector de archivos",
-//                "/home/marco/Escritorio",
-//                "Archivos JSON(*.json)");
-//    file.setFileName(filename);
-//    if (!file.open(QFile::ReadOnly))
-//        return;
-
-//    jsd = QJsonDocument::fromJson(file.readAll());
-//    file.close();
-//    if (!cargarArchivo())
-//        return;
-
-//    graficar();
+    graficar();
 }

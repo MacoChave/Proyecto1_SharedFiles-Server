@@ -49,6 +49,7 @@ private:
 
     void interpretarMensaje(QString mensaje);
 
+    void cargar();
     bool cargarUsuario();
     bool cargarArchivo();
     void graficar();
