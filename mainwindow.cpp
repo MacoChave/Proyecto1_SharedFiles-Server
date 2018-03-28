@@ -214,12 +214,12 @@ void MainWindow::interpretarMensaje(QString mensaje)
                 else if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->LIENZO)
                     result.append("Lienzo");
                 else if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->PRESENTACION)
-                    result.append("Presentacipn");
+                    result.append("Presentacion");
 
                 result.append("^");
 
                 if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->DUENIO)
-                    result.append("Dueno");
+                    result.append("Propietario");
                 else if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->EDITAR)
                     result.append("Editar");
                 else if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->VER)
@@ -247,7 +247,7 @@ void MainWindow::interpretarMensaje(QString mensaje)
         /* VALIDAR EXISTENCIA DE ARCHIVOS */
         if (matrix->getHeaderColumn()->isEmpty())
         {
-            producer("INFODOC");
+            producer("INFODOC^");
 
             return;
         }
@@ -259,8 +259,17 @@ void MainWindow::interpretarMensaje(QString mensaje)
         TADColumn *tadColumnResult = matrix->getHeaderColumn()->get(tadColumnaTemporal)->getData();
         if (tadColumnResult != NULL)
         {
+            QString filename;
             QString result("INFODOC^");
-            result.append(tadColumnResult->getFilePath());
+            filename = tadColumnResult->getFilePath();
+
+            QFile fileTemp(filename);
+            if (fileTemp.open(QFile::ReadOnly))
+            {
+                QTextStream fileRead(&fileTemp);
+                result.append(fileRead.readAll());
+                out << lstMsg[1];
+            }
 
             producer(result);
         }
