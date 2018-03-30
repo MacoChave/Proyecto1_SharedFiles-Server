@@ -59,8 +59,6 @@ void MainWindow::consumer()
         tcpCliente->read(buffer.data(), buffer.size());
         qDebug() << (QString) buffer;
         interpretarMensaje((QString) buffer);
-
-        ui->edtLog->append((QString) buffer);
     }
 }
 
