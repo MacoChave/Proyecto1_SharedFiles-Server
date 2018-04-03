@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QFile>
+#include <QDate>
 
 #include <QJsonDocument>
 #include <QJsonObject>

@@ -1,5 +1,18 @@
 #include "tadcolumn.h"
 
+TADColumn::TADColumn()
+{
+    nombre = "";
+    tipo = 0;
+    fechaCreacion = "";
+    nickCreacion = "";
+    fechaUltimoCambio = "";
+    nickUltimoCambio = "";
+    disponible = true;
+    filepath = "";
+    internalColumn = new ColumnList();
+}
+
 TADColumn::TADColumn(QString _nombre, int _tipo, QString _fechaCreacion, QString _nickDuenio, QString _fechaCambio, QString _nickCambio, QString _filepath)
 {
     nombre = _nombre;
@@ -19,8 +32,8 @@ TADColumn::TADColumn(QString _nombre, int _tipo, QString _fecha, QString _nickDu
     tipo = _tipo;
     fechaCreacion = _fecha;
     nickCreacion = _nickDuenio;
-    fechaUltimoCambio = "";
-    nickUltimoCambio ="";
+    fechaUltimoCambio = _fecha;
+    nickUltimoCambio = _nickDuenio;
     disponible = true;
     filepath = _filepath;
     internalColumn = new ColumnList();
@@ -61,6 +74,16 @@ void TADColumn::setNombre(QString value)
 QString TADColumn::getNombre()
 {
     return nombre;
+}
+
+void TADColumn::setTipo(QString tipo)
+{
+    if (tipo.compare("Documento") == 0)
+        setTipo(DOCUMENTO);
+    else if (tipo.compare("Lienzo") == 0)
+        setTipo(LIENZO);
+    else
+        setTipo(PRESENTACION);
 }
 
 void TADColumn::setTipo(int value)
@@ -111,6 +134,11 @@ void TADColumn::setNickUltimoCambio(QString value)
 QString TADColumn::getNickUltimoCambio()
 {
     return nickUltimoCambio;
+}
+
+void TADColumn::setDisponible()
+{
+    disponible = true;
 }
 
 void TADColumn::togleDisponible()

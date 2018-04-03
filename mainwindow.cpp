@@ -276,15 +276,92 @@ void MainWindow::interpretarMensaje(QString mensaje)
         delete tadColumnaTemporal;
         tadColumnaTemporal = NULL;
     }
-    else if (mensaje.startsWith("CREATEDOCS"))
+    else if (mensaje.startsWith("CREATEFILE"))
     {
-        // CREAR ARCHIVO Y NODO MATRIZ PARA USUARIO ACTUAL
+        if (lstMsg.size() < 2)
+            return;
+
+        QString filename = lstMsg[1];
+        QString permiso = lstMsg[2];
+        QString tipo = lstMsg[3];
+        QString contenido = lstMsg[4];
+        QString fechaCrn;
+        QDate currentDate = QDate::currentDate();
+        fechaCrn = currentDate.toString("yy-MM-dd");
+
+        QString filepath("Files/");
+        filepath.append(filename);
+        filepath.append(".json");
+
+        QFile file(filepath);
+        if (!file.open(QFile::WriteOnly | QFile::Text))
+            return;
+
+        QTextStream out(&file);
+        out << contenido;
+        flush(out);
+
+        file.close();
+
+        TADColumn *tadColumn = new TADColumn();
+        tadColumn->setNombre(filename);
+        tadColumn->setTipo(tipo);
+        tadColumn->setFechaCreacion(fechaCrn);
+        tadColumn->setNickCreacion(currentUserSession->getNickname());
+        tadColumn->setFechaUltimoCambio(fechaCrn);
+        tadColumn->setNickUltimoCambio(currentUserSession->getNickname());
+        tadColumn->setFilepath(filepath);
+
+        TADMatrixNode *tadMatrixNode = new TADMatrixNode();
+        tadMatrixNode->setArchivo(filename);
+        tadMatrixNode->setNickname(currentUserSession->getNickname());
+        tadMatrixNode->setPermiso(permiso);
+
+
+        if (matrix->getHeaderColumn()->insert(tadColumn) != NULL)
+        {
+            MatrixNode *matrixNode = NULL;
+            matrixNode = tadColumn->addInternalColumn(tadMatrixNode);
+            currentUserSession->addInternalRow(matrixNode);
+        }
+        else
+            return;
     }
-    else if (mensaje.startsWith("UPDATEDOCS"))
+    else if (mensaje.startsWith("UPDATEFILE"))
     {
-        // BUACAR ARCHIVO Y ACTUALIZAR
+        QString filename = lstMsg[1];
+        QString contenido = lstMsg[4];
+        QString fechaCrn;
+        QDate currentDate = QDate::currentDate();
+        fechaCrn = currentDate.toString("yy-MM-dd");
+
+        QString filepath("Files/");
+        filepath.append(filename);
+        filepath.append(".json");
+
+        QFile file(filepath);
+        if (!file.open(QFile::WriteOnly | QFile::Text))
+            return;
+
+        QTextStream out(&file);
+        out << contenido;
+        flush(out);
+
+        file.close();
+
+        TADColumn *tadColumn = NULL;
+        TADColumn *temporalTC = new TADColumn(filename);
+
+        tadColumn = matrix->getHeaderColumn()->get(temporalTC)->getData();
+        if (tadColumn != NULL)
+        {
+            tadColumn->setFechaUltimoCambio(fechaCrn);
+            tadColumn->setNickUltimoCambio(currentUserSession->getNickname());
+        }
+
+        delete temporalTC;
     }
-    else if (mensaje.startsWith("DELETEDOCS"))
+    else if (mensaje.startsWith("DELETEFILE"))
     {
         // ELIMINAR ARCHIVO Y SU LISTA INTERNA.
         // ELIMINAR NODO MATRIZ DE TODOS LOS USUARIOS QUE TENGAN ESE ARCHIVO

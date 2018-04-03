@@ -23,6 +23,7 @@ public:
     QString getArchivo();
     void setArchivo(QString value);
     int getPermiso();
+    void setPermiso(QString value);
     void setPermiso(int value);
 
     int compareColumn(TADMatrixNode *value);

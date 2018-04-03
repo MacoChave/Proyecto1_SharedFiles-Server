@@ -46,6 +46,16 @@ int TADMatrixNode::getPermiso()
     return permiso;
 }
 
+void TADMatrixNode::setPermiso(QString value)
+{
+    if (value.compare("Propietario") == 0)
+        setPermiso(DUENIO);
+    else if (value.compare("Editar") == 0)
+        setPermiso(EDITAR);
+    else
+        setPermiso(VER);
+}
+
 void TADMatrixNode::setPermiso(int value)
 {
     permiso = value;

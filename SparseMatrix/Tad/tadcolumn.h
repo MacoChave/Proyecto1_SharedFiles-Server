@@ -14,6 +14,7 @@ class TADColumn
     QString filepath;
     ColumnList *internalColumn;
 public:
+    TADColumn();
     TADColumn(QString _nombre, int _tipo, QString _fechaCreacion, QString _nickDuenio, QString _fechaCambio, QString _nickCambio, QString _filepath);
     TADColumn(QString _nombre, int _tipo, QString _fecha, QString _nickDuenio, QString _filepath);
     TADColumn(QString _nombre);
@@ -26,6 +27,7 @@ public:
 
     void setNombre(QString value);
     QString getNombre();
+    void setTipo(QString tipo);
     void setTipo(int value);
     int getTipo();
     void setFechaCreacion(QString value);
@@ -36,6 +38,7 @@ public:
     QString getFechaUltimoCambio();
     void setNickUltimoCambio(QString value);
     QString getNickUltimoCambio();
+    void setDisponible();
     void togleDisponible();
     bool isDisponible();
     void setFilepath(QString value);
