@@ -40,6 +40,8 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
+    int rowCountTable;
     TADRow *currentUserSession;
     Matrix *matrix;
 
@@ -48,12 +50,28 @@ private:
     QTcpServer *tcpServer;
     QTcpSocket *tcpCliente;
 
-    void interpretarMensaje(QString mensaje);
+    enum
+    {
+        KEY, REQUEST, ANSWER
+    };
 
-    void cargar();
-    bool cargarUsuario();
-    bool cargarArchivo();
-    void graficar();
+    void interpreter(QString message);
+
+    void actionLogIn(QStringList value);
+    void actionLogUp(QStringList value);
+    void actionLogOut();
+    void actionSession();
+    void actionListFiles();
+    void actionInfoFiles(QStringList value);
+    bool actionCreateFile(QStringList value);
+    bool actionUpdateFile(QStringList value);
+    bool actionDeleteFile(QStringList value);
+
+    void loadJSON();
+    bool loadUserJSON();
+    bool loadFilesJSON();
+
+    void graphMatrix();
 };
 
 #endif // MAINWINDOW_H

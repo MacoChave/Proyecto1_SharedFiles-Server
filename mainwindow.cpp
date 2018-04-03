@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
                 );
     }
 
-    cargar();
+    loadJSON();
 }
 
 MainWindow::~MainWindow()
@@ -57,8 +57,7 @@ void MainWindow::consumer()
         QByteArray buffer;
         buffer.resize(tcpCliente->bytesAvailable());
         tcpCliente->read(buffer.data(), buffer.size());
-        qDebug() << (QString) buffer;
-        interpretarMensaje((QString) buffer);
+        interpreter((QString) buffer);
     }
 }
 
@@ -70,309 +69,519 @@ void MainWindow::producer(QString value)
             );
 }
 
-void MainWindow::interpretarMensaje(QString mensaje)
+void MainWindow::interpreter(QString message)
 {
-    QString log;
-    QStringList lstMsg = mensaje.split("^");
-    qDebug() << lstMsg;
-    QTextStream out(&log);
+    QStringList lstMsg = message.split("^");
 
-    if (mensaje.startsWith("LOGIN"))
+    if (message.startsWith("LOGIN"))
+        actionLogIn(lstMsg);
+    else if (message.startsWith("LOGUP"))
+        actionLogUp(lstMsg);
+    else if (message.startsWith("LOGOUT"))
+        actionLogOut();
+    else if (message.startsWith("SESSION"))
+        actionSession();
+    else if (message.startsWith("LISTFILES"))
+        actionListFiles();
+    else if (message.startsWith("INFOFILE"))
+        actionInfoFiles(lstMsg);
+    else if (message.startsWith("CREATEFILE"))
+        actionCreateFile(lstMsg);
+    else if (message.startsWith("UPDATEFILE"))
+        actionUpdateFile(lstMsg);
+    else if (message.startsWith("DELETEFILE"))
+        actionDeleteFile(lstMsg);
+}
+
+/***********************************************************************************
+ * MANEJO DE SOLICITUDES
+ **********************************************************************************/
+void MainWindow::actionLogIn(QStringList value)
+{
+    ui->tblLog->insertRow(y);
+    ui->tblLog->setItem(
+                y, KEY,
+                new QTableWidgetItem("Inicio de Sesión")
+                );
+    ui->tblLog->setItem(
+                y, REQUEST,
+                new QTableWidgetItem(value[0])
+                );
+
+    TADRow *temporalRow = new TADRow();
+    temporalRow->setNickname(value[1]);
+    temporalRow->setPassword(value[2]);
+
+    Node<TADRow *> *row = matrix->getHeaderRow()->get(temporalRow);
+    if (row != NULL)
     {
-        out << "***** LOGIN *****" << "\n* NICKNAME\n\t";
-        out << lstMsg[1] << "\n* PASSWORD\n\t";
-        out << lstMsg[2] << "\n ******************** \n";
-        flush(out);
-
-        TADRow *rowTemp = new TADRow();
-        rowTemp->setNickname(lstMsg[1]);
-        rowTemp->setPassword(lstMsg[2]);
-
-        Node<TADRow *> *row = matrix->getHeaderRow()->get(rowTemp);
-        if (row != NULL)
+        if (row->getData()->comparePass(temporalRow) == 0)
         {
-            if (row->getData()->comparePass(rowTemp) == 0)
-            {
-                currentUserSession = row->getData();
-                producer("LOGIN^CORRECTO");
-                out << "CORRECTO" << "\n ******************** \n";
-            }
-            else
-            {
-                producer("LOGIN^INCORRECTO");
-                out << "INCORRECTO" << "\n ******************** \n";
-            }
+            currentUserSession = row->getData();
+            producer("LOGIN^CORRECTO");
+
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("Correcto")
+                        );
         }
         else
         {
             producer("LOGIN^INCORRECTO");
-            out << "INCORRECTO" << "\n ******************** \n";
+
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("Incorrecto")
+                        );
         }
-
-        flush(out);
-        delete rowTemp;
-        rowTemp = NULL;
     }
-    else if (mensaje.startsWith("LOGUP"))
+    else
     {
-        out << "******** LOGUP ********" << "\n* NICKNAME\n\t";
-        out << lstMsg[1] << "\n* PASSWORD\n\t";
-        out << lstMsg[2] << "\n* NOMBRE\n\t";
-        out << lstMsg[3] << "\n* CORREO\n\t";
-        out << lstMsg[4] << "\n ******************** \n\t";
-        flush(out);
+        producer("LOGIN^INCORRECTO");
 
-        TADRow *rowTemp = new TADRow(lstMsg[3], lstMsg[4], lstMsg[1], lstMsg[2]);
-        if (matrix->getHeaderRow()->get(rowTemp) != NULL)
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem("Incorrecto")
+                    );
+    }
+
+    y++;
+    delete temporalRow;
+    temporalRow = NULL;
+}
+
+void MainWindow::actionLogUp(QStringList value)
+{
+    QString request;
+    request.append(value[0]);
+    request.append("\n");
+    request.append(value[2]);
+    request.append("\n");
+    request.append(value[3]);
+
+    ui->tblLog->insertRow(y);
+    ui->tblLog->setItem(
+                y, KEY,
+                new QTableWidgetItem("Crear usuario")
+                );
+    ui->tblLog->setItem(
+                y, REQUEST,
+                new QTableWidgetItem(request)
+                );
+
+    TADRow *temporalRow = new TADRow(value[3], value[4], value[1], value[2]);
+    if (matrix->getHeaderRow()->get(temporalRow) != NULL)
+    {
+        producer("LOGUP^INCORRECTO");
+
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem("Usuario ya existe")
+                    );
+
+    }
+    else
+    {
+        if (matrix->getHeaderRow()->insert(temporalRow) != NULL)
+        {
+            producer("LOGUP^CORRECTO");
+
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("Usuario creado")
+                        );
+        }
+        else
         {
             producer("LOGUP^INCORRECTO");
-            out << "INCORRECTO" << "\n ******************** \n";
 
-            delete rowTemp;
-            rowTemp = NULL;
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("Usuario no creado")
+                        );
+        }
+    }
+
+    y++;
+    delete temporalRow;
+    temporalRow = NULL;
+}
+
+void MainWindow::actionLogOut()
+{
+    ui->tblLog->insertRow(y);
+    ui->tblLog->setItem(
+                y, KEY,
+                new QTableWidgetItem("Cerrar Sesion")
+                );
+    ui->tblLog->setItem(
+                y, REQUEST,
+                new QTableWidgetItem(currentUserSession->getNickname())
+                );
+
+    currentUserSession = NULL;
+
+    ui->tblLog->setItem(
+                y, ANSWER,
+                new QTableWidgetItem("Sesion concluida");
+                );
+
+    y++;
+}
+
+void MainWindow::actionSession()
+{
+    ui->tblLog->insertRow(y);
+    ui->tblLog->setItem(
+                y, KEY,
+                new QTableWidgetItem("Informe de sesión")
+                );
+    ui->tblLog->setItem(
+                y, REQUEST,
+                new QTableWidgetItem("Usuario en sesión")
+                );
+    if (currentUserSession != NULL)
+    {
+        QString currentUser("SESSION^");
+        currentUser.append(currentUserSession->getNickname());
+        producer(currentUser);
+
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem(currentUserSession->getNickname())
+                    );
+    }
+    else
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem("Ningún usuario en sesión")
+                    );
+
+    y++;
+}
+
+void MainWindow::actionListFiles()
+{
+    ui->tblLog->insertRow(y);
+    ui->tblLog->setItem(
+                y, KEY,
+                new QTableWidgetItem("Lista de archivos")
+                );
+
+    if (currentUserSession == NULL)
+    {
+        ui->tblLog->setItem(
+                    y, REQUEST,
+                    new QTableWidgetItem("Ningún usuario en sesión")
+                    );
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem("No hay archivos para mostrar")
+                    );
+
+        producer("LISTFILES^");
+        y++;
+        return;
+    }
+
+    ui->tblLog->setItem(
+                y, REQUEST,
+                new QTableWidgetItem(currentUserSession->getNickname())
+                );
+
+    /* VALIDAR EXISTENCIA DE NODOS */
+    if (matrix->getHeaderColumn()->isEmpty())
+    {
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem("No hay archivos para mostar")
+                    );
+
+        producer("LISTFILES^");
+        y++;
+        return;
+    }
+
+    /* TEMPORALES */
+    Node<TADColumn *> *temporalNodeColumn = NULL;
+    TADColumn *temporalTadColumn = NULL;
+    MatrixNode *temporalMatrixNode = NULL;
+    TADMatrixNode *temporalTadMatrixNode = NULL;
+
+    /* IGUALAR NODOS TAD TEMPORALES */
+    temporalNodeColumn = matrix->getHeaderColumn()->first();
+    temporalMatrixNode = currentUserSession->getInternalRow()->first();
+
+    /* RECORRER NODOS, VALIDANDO PRESENCIA DE USUARIO ACTUAL */
+    int countFiles = 0;
+    QString result("LISTFILES^");
+
+    while (temporalNodeColumn != NULL || temporalMatrixNode != NULL)
+    {
+        temporalTadColumn = temporalNodeColumn->getData();
+        temporalTadMatrixNode = temporalMatrixNode->getData();
+
+        if (temporalTadColumn->getNombre().compare(temporalTadMatrixNode->getArchivo()) == 0)
+        {
+            result.append(temporalTadColumn->getNombre());
+            result.append("^");
+
+            if (temporalTadColumn->getTipo() == temporalTadColumn->DOCUMENTO)
+                result.append("Documento");
+            else if (temporalTadColumn->getTipo() == temporalTadColumn->LIENZO)
+                result.append("Lienzo");
+            else if (temporalTadColumn->getTipo() == temporalTadColumn->PRESENTACION)
+                result.append("Presentacion");
+
+            result.append("^");
+
+            if (temporalTadMatrixNode->getPermiso() == temporalTadMatrixNode->DUENIO)
+                result.append("Propietario");
+            else if (temporalTadMatrixNode->getPermiso() == temporalTadMatrixNode->EDITAR)
+                result.append("Editar");
+            else if (temporalTadMatrixNode->getPermiso() == temporalTadMatrixNode->VER)
+                result.append("Ver");
+
+            result.append("^");
+            temporalNodeColumn = temporalNodeColumn->getNext();
+            temporalMatrixNode = temporalMatrixNode->getNext();
+
+            countFiles++;
+            temporalTadColumn = NULL;
+            temporalTadMatrixNode = NULL;
         }
         else
-        {
-            if (matrix->getHeaderRow()->insert(rowTemp) != NULL)
-            {
-                producer("LOGUP^CORRECTO");
-                out << "CORRECTO" << "\n ******************** \n";
-            }
-            else
-            {
-                producer("LOGUP^INCORRECTO");
-                out << "INCORRECTO" << "\n ******************** \n";
-
-                delete rowTemp;
-                rowTemp = NULL;
-            }
-        }
-
-        flush(out);
+            temporalNodeColumn = temporalNodeColumn->getNext();
     }
-    else if (mensaje.startsWith("LOGOUT"))
-    {
-        currentUserSession = NULL;
 
-        out << "******** LOGUP ********\t";
-        out << "CORRECTO" << "\n ******************** \n";
-        flush(out);
-    }
-    else if (mensaje.startsWith("SESSION"))
+    QString answer("Se encontraron ");
+    answer.append(QString::number(countFiles));
+    answer.append(" archivos");
+    ui->tblLog->setItem(
+                y, ANSWER,
+                new QTableWidgetItem(answer)
+                );
+    producer(result);
+    y++;
+}
+
+void MainWindow::actionInfoFiles(QStringList value)
+{
+    ui->tblLog->insertRow(y);
+    ui->tblLog->setItem(
+                y, KEY,
+                new QTableWidgetItem("Información de archivo")
+                );
+    ui->tblLog->setItem(
+                y, REQUEST,
+                new QTableWidgetItem(value[1]);
+                );
+    /* VALIDAR EXISTENCIA DE ARCHIVOS */
+    if (matrix->getHeaderColumn()->isEmpty())
     {
-        out << "******** SESSION ********\t";
-        if (currentUserSession != NULL)
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem("No hay archivos para mostrar");
+                    );
+
+        producer("INFOFILE^");
+
+        y++;
+        return;
+    }
+
+    /* NODOS TAD TEMPORAL */
+    TADColumn *temporalTadColumn = new TADColumn(value[1]);
+
+    /* NODOS RESULTADO BUSQUEDA */
+    TADColumn *tadColumn = matrix->getHeaderColumn()->get(temporalTadColumn)->getData();
+    if (tadColumn != NULL)
+    {
+        QString filepath;
+        QString result("INFOFILE^");
+        filepath = tadColumn->getFilePath();
+
+        QFile temporalFile(filepath);
+        if (temporalFile.open(QFile::ReadOnly))
         {
-            QString currentUser("SESSION^");
-            currentUser.append(currentUserSession->getNickname());
-            producer(currentUser);
-            out << currentUserSession->getNickname() << "\n ******************** \n";
+            QTextStream in(&temporalFile);
+            result.append(in.readAll());
+
+            temporalFile.close();
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("Archivo leido")
+                        );
         }
         else
-        {
-            out << "INACTIVO" << "\n ******************** \n";
-        }
-        flush(out);
-    }
-    else if (mensaje.startsWith("LISTDOCS"))
-    {
-        /* VALIDAR EXISTENCIA DE NODOS */
-        if (matrix->getHeaderColumn()->isEmpty())
-        {
-            producer("LISTDOCS");
-            flush(out);
-
-            return;
-        }
-
-        /* NODOS TAD TEMPORALES */
-        Node<TADColumn *> *nodeColumnTemporal = NULL;
-        MatrixNode *matrixNodeTemporal = NULL;
-        TADColumn *tadColumnaTemporal = NULL;
-        TADMatrixNode *tadMatrixNodeTemporal = NULL;
-
-        /* IGUALAR NODOS TAD TEMPORALES */
-        nodeColumnTemporal = matrix->getHeaderColumn()->first();
-        matrixNodeTemporal = currentUserSession->getInternalRow()->first();
-
-        /* RECORRER NODOS, VALIDANDO PRESENCIA DE USUARIO ACTUAL */
-        QString result("LISTDOCS^");
-        while (nodeColumnTemporal != NULL || matrixNodeTemporal != NULL)
-        {
-            tadColumnaTemporal = nodeColumnTemporal->getData();
-            tadMatrixNodeTemporal = matrixNodeTemporal->getData();
-
-            if (tadColumnaTemporal->getNombre().compare(tadMatrixNodeTemporal->getArchivo()) == 0)
-            {
-                result.append(tadMatrixNodeTemporal->getArchivo());
-                result.append("^");
-
-                if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->DOCUMENTO)
-                    result.append("Documento");
-                else if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->LIENZO)
-                    result.append("Lienzo");
-                else if (tadColumnaTemporal->getTipo() == tadColumnaTemporal->PRESENTACION)
-                    result.append("Presentacion");
-
-                result.append("^");
-
-                if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->DUENIO)
-                    result.append("Propietario");
-                else if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->EDITAR)
-                    result.append("Editar");
-                else if (tadMatrixNodeTemporal->getPermiso() == tadMatrixNodeTemporal->VER)
-                    result.append("Ver");
-
-                result.append("^");
-                nodeColumnTemporal = nodeColumnTemporal->getNext();
-                matrixNodeTemporal = matrixNodeTemporal->getNext();
-
-                tadColumnaTemporal = NULL;
-                tadMatrixNodeTemporal = NULL;
-            }
-            else
-            {
-                nodeColumnTemporal = nodeColumnTemporal->getNext();
-            }
-            flush(out);
-        }
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("Error de lectura")
+                        );
 
         producer(result);
-        qDebug() << result;
     }
-    else if (mensaje.startsWith("INFODOC"))
+
+    y++;
+    delete temporalTadColumn;
+    temporalTadColumn = NULL;
+}
+
+bool MainWindow::actionCreateFile(QStringList value)
+{
+    QString filename = value[1];
+    QString permission = value[2];
+    QString fileType = value[3];
+    QString content = value[4];
+    QString strCurrentDate;
+    QDate currentDate = QDate::currentDate();
+    strCurrentDate = currentDate.toString("yy-MM-dd");
+
+    ui->tblLog->insertRow(y);
+    ui->tblLog->setItem(
+                y, KEY,
+                new QTableWidgetItem("Crear archivo")
+                );
+    ui->tblLog->setItem(
+                y, REQUEST,
+                new QTableWidgetItem(filename);
+                );
+
+    TADColumn *temporalTadColumn = new TADColumn(filename);
+    if (matrix->getHeaderColumn()->get(temporalTadColumn) != NULL)
     {
-        /* VALIDAR EXISTENCIA DE ARCHIVOS */
-        if (matrix->getHeaderColumn()->isEmpty())
-        {
-            producer("INFODOC^");
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem("Archivo ya existe");
+                    );
 
-            return;
-        }
-
-        /* NODOS TAD TEMPORAL */
-        TADColumn *tadColumnaTemporal = new TADColumn(lstMsg[1]);
-
-        /* NODOS RESULTADO BUSQUEDA */
-        TADColumn *tadColumnResult = matrix->getHeaderColumn()->get(tadColumnaTemporal)->getData();
-        if (tadColumnResult != NULL)
-        {
-            QString filename;
-            QString result("INFODOC^");
-            filename = tadColumnResult->getFilePath();
-
-            QFile fileTemp(filename);
-            if (fileTemp.open(QFile::ReadOnly))
-            {
-                QTextStream fileRead(&fileTemp);
-                result.append(fileRead.readAll());
-                out << lstMsg[1];
-            }
-
-            producer(result);
-        }
-
-        flush(out);
-        delete tadColumnaTemporal;
-        tadColumnaTemporal = NULL;
+        y++;
+        return;
     }
-    else if (mensaje.startsWith("CREATEFILE"))
+
+    QString filepath("Files/");
+    filepath.append(filename);
+    filepath.append(".json");
+
+    QFile file(filepath);
+    if (file.open(QFile::WriteOnly | QFile::Text))
     {
-        if (lstMsg.size() < 2)
-            return;
-
-        QString filename = lstMsg[1];
-        QString permiso = lstMsg[2];
-        QString tipo = lstMsg[3];
-        QString contenido = lstMsg[4];
-        QString fechaCrn;
-        QDate currentDate = QDate::currentDate();
-        fechaCrn = currentDate.toString("yy-MM-dd");
-
-        QString filepath("Files/");
-        filepath.append(filename);
-        filepath.append(".json");
-
-        QFile file(filepath);
-        if (!file.open(QFile::WriteOnly | QFile::Text))
-            return;
-
         QTextStream out(&file);
-        out << contenido;
+        out << content;
         flush(out);
 
         file.close();
 
         TADColumn *tadColumn = new TADColumn();
         tadColumn->setNombre(filename);
-        tadColumn->setTipo(tipo);
-        tadColumn->setFechaCreacion(fechaCrn);
+        tadColumn->setTipo(fileType);
+        tadColumn->setFechaCreacion(strCurrentDate);
         tadColumn->setNickCreacion(currentUserSession->getNickname());
-        tadColumn->setFechaUltimoCambio(fechaCrn);
+        tadColumn->setFechaUltimoCambio(strCurrentDate);
         tadColumn->setNickUltimoCambio(currentUserSession->getNickname());
         tadColumn->setFilepath(filepath);
 
         TADMatrixNode *tadMatrixNode = new TADMatrixNode();
         tadMatrixNode->setArchivo(filename);
         tadMatrixNode->setNickname(currentUserSession->getNickname());
-        tadMatrixNode->setPermiso(permiso);
-
+        tadMatrixNode->setPermiso(permission);
 
         if (matrix->getHeaderColumn()->insert(tadColumn) != NULL)
         {
             MatrixNode *matrixNode = NULL;
             matrixNode = tadColumn->addInternalColumn(tadMatrixNode);
             currentUserSession->addInternalRow(matrixNode);
+
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("Archivo creado");
+                        );
         }
         else
-            return;
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("Archivo no creado");
+                        );
     }
-    else if (mensaje.startsWith("UPDATEFILE"))
+    else
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem("Archivo JSON no creado");
+                    );
+
+    y++;
+}
+
+bool MainWindow::actionUpdateFile(QStringList value)
+{
+    QString filename = lstMsg[1];
+    QString contenido = lstMsg[4];
+    QString strCurrentDate;
+    QDate currentDate = QDate::currentDate();
+    strCurrentDate = currentDate.toString("yy-MM-dd");
+
+    ui->tblLog->insertRow(y);
+    ui->tblLog->setItem(
+                y, KEY,
+                new QTableWidgetItem("Actualizar archivo")
+                );
+    ui->tblLog->setItem(
+                y, REQUEST,
+                new QTableWidgetItem(filename);
+                );
+
+    QString filepath("Files/");
+    filepath.append(filename);
+    filepath.append(".json");
+
+    QFile file(filepath);
+    if (file.open(QFile::WriteOnly | QFile::Text))
     {
-        QString filename = lstMsg[1];
-        QString contenido = lstMsg[4];
-        QString fechaCrn;
-        QDate currentDate = QDate::currentDate();
-        fechaCrn = currentDate.toString("yy-MM-dd");
-
-        QString filepath("Files/");
-        filepath.append(filename);
-        filepath.append(".json");
-
-        QFile file(filepath);
-        if (!file.open(QFile::WriteOnly | QFile::Text))
-            return;
-
         QTextStream out(&file);
         out << contenido;
         flush(out);
 
         file.close();
 
+        TADColumn *temporalTadColumn = new TADColumn(filename);
         TADColumn *tadColumn = NULL;
-        TADColumn *temporalTC = new TADColumn(filename);
 
-        tadColumn = matrix->getHeaderColumn()->get(temporalTC)->getData();
+        tadColumn = matrix->getHeaderColumn()->get(temporalTadColumn)->getData();
         if (tadColumn != NULL)
         {
-            tadColumn->setFechaUltimoCambio(fechaCrn);
+            tadColumn->setFechaUltimoCambio(strCurrentDate);
             tadColumn->setNickUltimoCambio(currentUserSession->getNickname());
-        }
 
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("Cambios guardados");
+                        );
+        }
+        else
+            ui->tblLog->setItem(
+                        y, ANSWER,
+                        new QTableWidgetItem("No se encontró el archivo");
+                        );
         delete temporalTC;
     }
-    else if (mensaje.startsWith("DELETEFILE"))
-    {
-        // ELIMINAR ARCHIVO Y SU LISTA INTERNA.
-        // ELIMINAR NODO MATRIZ DE TODOS LOS USUARIOS QUE TENGAN ESE ARCHIVO
-    }
-    ui->edtLog->append(log);
+    else
+        ui->tblLog->setItem(
+                    y, ANSWER,
+                    new QTableWidgetItem("No se encontró el archivo JSON");
+                    );
+
+    y++;
+}
+
+bool MainWindow::actionDeleteFile(QStringList value)
+{
+
 }
 
 /***********************************************************************************
  * MANEJO DE CARGA DE ARCHIVOS JSON
  **********************************************************************************/
-void MainWindow::cargar()
+void MainWindow::loadJSON()
 {
         QString filename("Files/usuarios.json");
 
@@ -387,7 +596,7 @@ void MainWindow::cargar()
 
         jsd = QJsonDocument::fromJson(file.readAll());
         file.close();
-        if (!cargarUsuario())
+        if (!loadUserJSON())
         {
             qDebug() << "No se pudo cargar los usuarios";
             return;
@@ -405,14 +614,14 @@ void MainWindow::cargar()
 
         jsd = QJsonDocument::fromJson(file.readAll());
         file.close();
-        if (!cargarArchivo())
+        if (!loadFilesJSON())
         {
             qDebug() << "No se pudo cargar los archivos";
             return;
         }
 }
 
-bool MainWindow::cargarUsuario()
+bool MainWindow::loadUserJSON()
 {
     if (jsd.isEmpty())
         return false;
@@ -433,7 +642,7 @@ bool MainWindow::cargarUsuario()
     return true;
 }
 
-bool MainWindow::cargarArchivo()
+bool MainWindow::loadFilesJSON()
 {
     if (jsd.isEmpty())
         return false;
@@ -513,15 +722,18 @@ bool MainWindow::cargarArchivo()
     return true;
 }
 
-void MainWindow::graficar()
+/***********************************************************************************
+ * MANEJO DE MATRIZ
+ **********************************************************************************/
+void MainWindow::graphMatrix()
 {
     matrix->graph("Matriz");
 }
 
+/***********************************************************************************
+ * METODOS DE ACCIÓN DE BOTÓN
+ **********************************************************************************/
 void MainWindow::on_btnMensaje_clicked()
 {
-//    producer(ui->edtMensaje->text());
-//    ui->edtMensaje->clear();
-
-    graficar();
+    graphMatrix();
 }
