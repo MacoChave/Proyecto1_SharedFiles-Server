@@ -63,9 +63,9 @@ private:
     void actionSession();
     void actionListFiles();
     void actionInfoFiles(QStringList value);
-    bool actionCreateFile(QStringList value);
-    bool actionUpdateFile(QStringList value);
-    bool actionDeleteFile(QStringList value);
+    void actionCreateFile(QStringList value);
+    void actionUpdateFile(QStringList value);
+    void actionDeleteFile(QStringList value);
 
     void loadJSON();
     bool loadUserJSON();

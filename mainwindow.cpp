@@ -98,6 +98,8 @@ void MainWindow::interpreter(QString message)
  **********************************************************************************/
 void MainWindow::actionLogIn(QStringList value)
 {
+    int y = ui->tblLog->rowCount();
+
     ui->tblLog->insertRow(y);
     ui->tblLog->setItem(
                 y, KEY,
@@ -145,13 +147,14 @@ void MainWindow::actionLogIn(QStringList value)
                     );
     }
 
-    y++;
     delete temporalRow;
     temporalRow = NULL;
 }
 
 void MainWindow::actionLogUp(QStringList value)
 {
+    int y = ui->tblLog->rowCount();
+
     QString request;
     request.append(value[0]);
     request.append("\n");
@@ -202,13 +205,14 @@ void MainWindow::actionLogUp(QStringList value)
         }
     }
 
-    y++;
     delete temporalRow;
     temporalRow = NULL;
 }
 
 void MainWindow::actionLogOut()
 {
+    int y = ui->tblLog->rowCount();
+
     ui->tblLog->insertRow(y);
     ui->tblLog->setItem(
                 y, KEY,
@@ -223,14 +227,14 @@ void MainWindow::actionLogOut()
 
     ui->tblLog->setItem(
                 y, ANSWER,
-                new QTableWidgetItem("Sesion concluida");
+                new QTableWidgetItem("Sesion concluida")
                 );
-
-    y++;
 }
 
 void MainWindow::actionSession()
 {
+    int y = ui->tblLog->rowCount();
+
     ui->tblLog->insertRow(y);
     ui->tblLog->setItem(
                 y, KEY,
@@ -256,12 +260,12 @@ void MainWindow::actionSession()
                     y, ANSWER,
                     new QTableWidgetItem("Ningún usuario en sesión")
                     );
-
-    y++;
 }
 
 void MainWindow::actionListFiles()
 {
+    int y = ui->tblLog->rowCount();
+
     ui->tblLog->insertRow(y);
     ui->tblLog->setItem(
                 y, KEY,
@@ -280,7 +284,6 @@ void MainWindow::actionListFiles()
                     );
 
         producer("LISTFILES^");
-        y++;
         return;
     }
 
@@ -298,7 +301,6 @@ void MainWindow::actionListFiles()
                     );
 
         producer("LISTFILES^");
-        y++;
         return;
     }
 
@@ -361,12 +363,14 @@ void MainWindow::actionListFiles()
                 y, ANSWER,
                 new QTableWidgetItem(answer)
                 );
+
     producer(result);
-    y++;
 }
 
 void MainWindow::actionInfoFiles(QStringList value)
 {
+    int y = ui->tblLog->rowCount();
+
     ui->tblLog->insertRow(y);
     ui->tblLog->setItem(
                 y, KEY,
@@ -374,19 +378,18 @@ void MainWindow::actionInfoFiles(QStringList value)
                 );
     ui->tblLog->setItem(
                 y, REQUEST,
-                new QTableWidgetItem(value[1]);
+                new QTableWidgetItem(value[1])
                 );
     /* VALIDAR EXISTENCIA DE ARCHIVOS */
     if (matrix->getHeaderColumn()->isEmpty())
     {
         ui->tblLog->setItem(
                     y, ANSWER,
-                    new QTableWidgetItem("No hay archivos para mostrar");
+                    new QTableWidgetItem("No hay archivos para mostrar")
                     );
 
         producer("INFOFILE^");
 
-        y++;
         return;
     }
 
@@ -422,13 +425,14 @@ void MainWindow::actionInfoFiles(QStringList value)
         producer(result);
     }
 
-    y++;
     delete temporalTadColumn;
     temporalTadColumn = NULL;
 }
 
-bool MainWindow::actionCreateFile(QStringList value)
+void MainWindow::actionCreateFile(QStringList value)
 {
+    int y = ui->tblLog->rowCount();
+
     QString filename = value[1];
     QString permission = value[2];
     QString fileType = value[3];
@@ -444,7 +448,7 @@ bool MainWindow::actionCreateFile(QStringList value)
                 );
     ui->tblLog->setItem(
                 y, REQUEST,
-                new QTableWidgetItem(filename);
+                new QTableWidgetItem(filename)
                 );
 
     TADColumn *temporalTadColumn = new TADColumn(filename);
@@ -452,10 +456,8 @@ bool MainWindow::actionCreateFile(QStringList value)
     {
         ui->tblLog->setItem(
                     y, ANSWER,
-                    new QTableWidgetItem("Archivo ya existe");
+                    new QTableWidgetItem("Archivo ya existe")
                     );
-
-        y++;
         return;
     }
 
@@ -494,28 +496,28 @@ bool MainWindow::actionCreateFile(QStringList value)
 
             ui->tblLog->setItem(
                         y, ANSWER,
-                        new QTableWidgetItem("Archivo creado");
+                        new QTableWidgetItem("Archivo creado")
                         );
         }
         else
             ui->tblLog->setItem(
                         y, ANSWER,
-                        new QTableWidgetItem("Archivo no creado");
+                        new QTableWidgetItem("Archivo no creado")
                         );
     }
     else
         ui->tblLog->setItem(
                     y, ANSWER,
-                    new QTableWidgetItem("Archivo JSON no creado");
+                    new QTableWidgetItem("Archivo JSON no creado")
                     );
-
-    y++;
 }
 
-bool MainWindow::actionUpdateFile(QStringList value)
+void MainWindow::actionUpdateFile(QStringList value)
 {
-    QString filename = lstMsg[1];
-    QString contenido = lstMsg[4];
+    int y = ui->tblLog->rowCount();
+
+    QString filename = value[1];
+    QString contenido = value[4];
     QString strCurrentDate;
     QDate currentDate = QDate::currentDate();
     strCurrentDate = currentDate.toString("yy-MM-dd");
@@ -527,7 +529,7 @@ bool MainWindow::actionUpdateFile(QStringList value)
                 );
     ui->tblLog->setItem(
                 y, REQUEST,
-                new QTableWidgetItem(filename);
+                new QTableWidgetItem(filename)
                 );
 
     QString filepath("Files/");
@@ -554,27 +556,26 @@ bool MainWindow::actionUpdateFile(QStringList value)
 
             ui->tblLog->setItem(
                         y, ANSWER,
-                        new QTableWidgetItem("Cambios guardados");
+                        new QTableWidgetItem("Cambios guardados")
                         );
         }
         else
             ui->tblLog->setItem(
                         y, ANSWER,
-                        new QTableWidgetItem("No se encontró el archivo");
+                        new QTableWidgetItem("No se encontró el archivo")
                         );
-        delete temporalTC;
+        delete temporalTadColumn;
     }
     else
         ui->tblLog->setItem(
                     y, ANSWER,
-                    new QTableWidgetItem("No se encontró el archivo JSON");
+                    new QTableWidgetItem("No se encontró el archivo JSON")
                     );
-
-    y++;
 }
 
-bool MainWindow::actionDeleteFile(QStringList value)
+void MainWindow::actionDeleteFile(QStringList value)
 {
+    int y = ui->tblLog->rowCount();
 
 }
 
