@@ -43,6 +43,7 @@ private:
 
     int rowCountTable;
     TADRow *currentUserSession;
+    TADColumn *currentFile;
     Matrix *matrix;
 
     QJsonDocument jsd;

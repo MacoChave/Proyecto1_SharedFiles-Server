@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     currentUserSession = NULL;
+    currentFile = NULL;
     matrix = new Matrix();
 
     tcpServer = new QTcpServer(this);
@@ -396,13 +397,12 @@ void MainWindow::actionInfoFiles(QStringList value)
     /* NODOS TAD TEMPORAL */
     TADColumn *temporalTadColumn = new TADColumn(value[1]);
 
-    /* NODOS RESULTADO BUSQUEDA */
-    TADColumn *tadColumn = matrix->getHeaderColumn()->get(temporalTadColumn)->getData();
-    if (tadColumn != NULL)
+    currentFile = matrix->getHeaderColumn()->get(temporalTadColumn)->getData();
+    if (currentFile != NULL)
     {
         QString filepath;
         QString result("INFOFILE^");
-        filepath = tadColumn->getFilePath();
+        filepath = currentFile->getFilePath();
 
         QFile temporalFile(filepath);
         if (temporalFile.open(QFile::ReadOnly))
@@ -532,9 +532,8 @@ void MainWindow::actionUpdateFile(QStringList value)
                 new QTableWidgetItem(filename)
                 );
 
-    QString filepath("Files/");
+    QString filepath(currentFile->getFilePath());
     filepath.append(filename);
-    filepath.append(".json");
 
     QFile file(filepath);
     if (file.open(QFile::WriteOnly | QFile::Text))
@@ -545,14 +544,10 @@ void MainWindow::actionUpdateFile(QStringList value)
 
         file.close();
 
-        TADColumn *temporalTadColumn = new TADColumn(filename);
-        TADColumn *tadColumn = NULL;
-
-        tadColumn = matrix->getHeaderColumn()->get(temporalTadColumn)->getData();
-        if (tadColumn != NULL)
+        if (currentFile != NULL)
         {
-            tadColumn->setFechaUltimoCambio(strCurrentDate);
-            tadColumn->setNickUltimoCambio(currentUserSession->getNickname());
+            currentFile->setFechaUltimoCambio(strCurrentDate);
+            currentFile->setNickUltimoCambio(currentUserSession->getNickname());
 
             ui->tblLog->setItem(
                         y, ANSWER,
@@ -564,7 +559,6 @@ void MainWindow::actionUpdateFile(QStringList value)
                         y, ANSWER,
                         new QTableWidgetItem("No se encontró el archivo")
                         );
-        delete temporalTadColumn;
     }
     else
         ui->tblLog->setItem(
