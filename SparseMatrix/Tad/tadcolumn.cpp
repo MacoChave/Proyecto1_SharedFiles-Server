@@ -96,6 +96,16 @@ int TADColumn::getTipo()
     return tipo;
 }
 
+QString TADColumn::getTipoString()
+{
+    if (tipo == DOCUMENTO)
+        return "documento";
+    else if (tipo == PRESENTACION)
+        return "presentacion";
+    else
+        return "lienzo";
+}
+
 void TADColumn::setFechaCreacion(QString value)
 {
     fechaCreacion = value;

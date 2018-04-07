@@ -30,6 +30,7 @@ public:
     void setTipo(QString tipo);
     void setTipo(int value);
     int getTipo();
+    QString getTipoString();
     void setFechaCreacion(QString value);
     QString getFechaCreacion();
     void setNickCreacion(QString value);

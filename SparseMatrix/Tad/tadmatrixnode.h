@@ -23,6 +23,7 @@ public:
     QString getArchivo();
     void setArchivo(QString value);
     int getPermiso();
+    QString getPermisoString();
     void setPermiso(QString value);
     void setPermiso(int value);
 

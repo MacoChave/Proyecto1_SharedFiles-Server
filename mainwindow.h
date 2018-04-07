@@ -67,11 +67,15 @@ private:
     void actionCreateFile(QStringList value);
     void actionUpdateFile(QStringList value);
     void actionDeleteFile(QStringList value);
+    void actionCoderImage(QStringList value);
 
     void loadJSON();
     bool loadUserJSON();
     bool loadFilesJSON();
-
+    void createJSON();
+    QString createUserJSON();
+    QString createFilesJSON();
+    QString coderImage(QString filepath);
     void graphMatrix();
 };
 
