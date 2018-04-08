@@ -36,3 +36,6 @@ HEADERS  += mainwindow.h \
     SparseMatrix/Tad/tadrow.h
 
 FORMS    += mainwindow.ui
+
+DISTFILES += \
+    .gitignore
