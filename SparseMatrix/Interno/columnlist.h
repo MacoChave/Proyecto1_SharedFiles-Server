@@ -35,6 +35,7 @@ public:
     TADMatrixNode *back();
     MatrixNode *get(TADMatrixNode *value);
     QString graph();
+    QString getList();
 };
 
 #endif // COLUMNAMATRIZ_H

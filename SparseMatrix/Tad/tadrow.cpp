@@ -97,6 +97,26 @@ MatrixNode *TADRow::addInternalRow(MatrixNode *value)
     return internalRow->insert(value);
 }
 
+Matrixnode *TADRow::removeInternalRow(TADMatrixNode *value)
+{
+    return internalRow->removeOne(value);
+}
+
+bool TADRow::eraseInternalRow(TADMatrixNode *value)
+{
+    MatrixNode *node = removeInternalRow(value);
+
+    if (node != NULL)
+    {
+        delete node;
+        node = NULL;
+
+        return true;
+    }
+
+    return false;
+}
+
 QString TADRow::toString()
 {
     QString text;

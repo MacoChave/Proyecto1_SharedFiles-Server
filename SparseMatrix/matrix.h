@@ -20,19 +20,24 @@ public:
     List<TADColumn *> *getHeaderColumn();
     List<TADRow *> *getHeaderRow();
 
-    /* MODIFICADORES */
-    void insert(TADMatrixNode *value);
-    void erase(QString archivo, QString nickname);
-    MatrixNode *get(QString archivo, QString nickname);
-    void edit(QString archivo, QString nickname, TADMatrixNode *value);
-    MatrixNode *remove(QString archivo, QString nickname);
+    /* MODIFICADORES DE COLUMNA */
+    bool insertColumn(TADColumn *value);
+    bool eraseColumn(TADColumn *value);
+    Node<TADColumn *> *getColumn(TADColumn *value);
+
+    /* MODIFICADORES DE FILA */
+    bool insertRow(TADRow *value);
+    Node<TADRow *> *getRow(TADRow *value);
+
+    /* MODIFICADORES DE NODO MATRIZ */
+    bool insertMatrixNode(QString user, QString filename, QString permiso);
+    bool eraseMatrixNode(QString user, QString filename);
+    QString getUserListMatrixNode(QString filename);
+    QString getFileListMatrixNode(QString user);
 
     /* OPERACIONES */
     void graph(QString filename);
-    /*
-    clear()
-    isEmpty()
-     */
+    void clear();
 };
 
 #endif // MATRIZ_H

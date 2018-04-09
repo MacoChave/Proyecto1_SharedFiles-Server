@@ -8,7 +8,11 @@ MatrixNode *ColumnList::insert(MatrixNode *current, MatrixNode *value)
     int compare = current->getData()->compareRow(value->getData());
 
     if (compare == 0)
+    {
+        current->getData()->setPermiso(value->getData()->getPermiso());
+
         return NULL;
+    }
     else
     {
         if (compare > 0)
@@ -240,4 +244,22 @@ QString ColumnList::graph()
     }
 
     return listGraph;
+}
+
+QString ColumnList::getList()
+{
+    QString list;
+    MatrixNode *current = head;
+
+    while (current != NULL)
+    {
+        list.append(current->getData()->getNickname());
+
+        if (current->getBottom() != NULL)
+            list.append("^");
+
+        current = current->getBottom();
+    }
+
+    return list;
 }

@@ -28,6 +28,8 @@ public:
     int comparePass(TADRow *row);
     RowList *getInternalRow();
     MatrixNode *addInternalRow(MatrixNode *value);
+    Matrixnode *removeInternalRow(TADMatrixNode *value);
+    bool eraseInternalRow(TADMatrixNode *value);
     QString toString();
     QString getNodeName();
     QString createNode();

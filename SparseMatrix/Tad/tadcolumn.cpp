@@ -78,9 +78,9 @@ QString TADColumn::getNombre()
 
 void TADColumn::setTipo(QString tipo)
 {
-    if (tipo.compare("Documento") == 0)
+    if (tipo.compare("documento") == 0)
         setTipo(DOCUMENTO);
-    else if (tipo.compare("Lienzo") == 0)
+    else if (tipo.compare("lienzo") == 0)
         setTipo(LIENZO);
     else
         setTipo(PRESENTACION);
@@ -181,15 +181,33 @@ ColumnList *TADColumn::getInternalColumn()
     return internalColumn;
 }
 
-MatrixNode *TADColumn::addInternalColumn(TADMatrixNode *value)
-{
-    MatrixNode *node = new MatrixNode(value);
-    return internalColumn->insert(node);
-}
-
 MatrixNode *TADColumn::addInternalColumn(MatrixNode *value)
 {
     return internalColumn->insert(value);
+}
+
+MatrixNode *TADColumn::removeInternalColumn(TADMatrixNode *value)
+{
+    return internalColumn->removeOne(value);
+}
+
+bool TADColumn::eraseInternalColumn(TADMatrixNode *value)
+{
+    MatrixNode *node = removeInternalColumn(value);
+    if (node != NULL)
+    {
+        delete node;
+        node = NULL;
+
+        return true;
+    }
+
+    return false;
+}
+
+QString TADColumn::getList()
+{
+    return internalColumn->getList();
 }
 
 QString TADColumn::toString()

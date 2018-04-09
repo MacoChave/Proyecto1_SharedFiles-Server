@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QDate>
+#include <QTextCodec>
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -69,6 +70,7 @@ private:
     void actionDeleteFile(QStringList value);
     void actionCoderImage(QStringList value);
 
+    void setLog(QString key, QString request, QString answer);
     void loadJSON();
     bool loadUserJSON();
     bool loadFilesJSON();

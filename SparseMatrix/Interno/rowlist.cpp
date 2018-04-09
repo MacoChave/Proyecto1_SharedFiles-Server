@@ -8,7 +8,11 @@ MatrixNode *RowList::insert(MatrixNode *current, MatrixNode *value)
     int compare = current->getData()->compareColumn(value->getData());
 
     if (compare == 0)
-        return current;
+    {
+        current->getData()->setPermiso(value->getData()->getPermiso());
+
+        return NULL;
+    }
     else
     {
         if (compare > 0)
@@ -241,3 +245,4 @@ QString RowList::graph()
 
     return listGraph;
 }
+

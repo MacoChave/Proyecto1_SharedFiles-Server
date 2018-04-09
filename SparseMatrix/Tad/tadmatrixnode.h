@@ -12,6 +12,7 @@ class TADMatrixNode
 public:
     TADMatrixNode();
     TADMatrixNode(QString _nickname, QString _archivo, int _permiso);
+    TADMatrixNode(QString _nickname, QString _archivo, QString _permiso);
     ~TADMatrixNode();
     enum
     {

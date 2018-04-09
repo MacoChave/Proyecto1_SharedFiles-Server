@@ -22,10 +22,7 @@ Matrix::Matrix()
 
 Matrix::~Matrix()
 {
-    qInfo() << "Limpiando memoria de matriz :)";
-    delete headerColumns;
-    delete headerRows;
-    qInfo() << "Memoria de matriz limpia :D";
+    clear();
 }
 
 List<TADColumn *> *Matrix::getHeaderColumn()
@@ -38,143 +35,152 @@ List<TADRow *> *Matrix::getHeaderRow()
     return headerRows;
 }
 
-void Matrix::insert(TADMatrixNode *value)
+/***********************************************************************************
+ * MODIFICADORES DE COLUMNA
+ **********************************************************************************/
+bool Matrix::insertColumn(TADColumn *value)
 {
-    TADColumn *column = new TADColumn(value->getArchivo());
-    TADRow *row = new TADRow(value->getNickname());
-    MatrixNode *node = new MatrixNode(value);
-
-    Node<TADColumn *> *nodeColumn = headerColumns->insert(column);
-    Node<TADRow *> *nodeRow = headerRows->insert(row);
-
-    if (nodeColumn->getData()->addInternalColumn(node) != NULL)
+    if (getColumn(value) == NULL)
     {
-        if (nodeRow->getData()->addInternalRow(node) != NULL)
-            qInfo() << "Se insertó correctamente el nodo :)";
-        else
-            qWarning() << "No se pudo insertar el nodo en la fila seleccionada :(";
+        headerColumns->insert(value);
+        return true;
     }
     else
-    {
-        delete node;
-        node = NULL;
-        qWarning() << "No se insertó el nodo :(";
-    }
+        return false;
 }
 
-void Matrix::erase(QString archivo, QString nickname)
+bool Matrix::eraseColumn(TADColumn *value)
 {
-    MatrixNode *node = remove(archivo, nickname);
-    if (node != NULL)
-    {
-        qInfo() << "Nodo encontrado :)";
-        delete node;
-        node = NULL;
-        qInfo() << "Nodo eliminado :D";
-    }
-    else
-        qWarning() << "No se encontró el nodo :(";
+    Node<TADColumn *> *node = NULL;
+    node = headerColumns->removeOne(value);
+    node->getData()->getInternalColumn()->clear();
+
+
 }
 
-MatrixNode *Matrix::get(QString archivo, QString nickname)
+Node<TADColumn *> *Matrix::getColumn(TADColumn *value)
 {
-    TADColumn *tadColumn = new TADColumn(archivo);
-    TADMatrixNode *tadMatrixNode = new TADMatrixNode(archivo, nickname, -1);
-    MatrixNode *node = NULL;
-
-    Node<TADColumn *> *nodeColumn = headerColumns->get(tadColumn);
-    if (nodeColumn != NULL)
-        node = nodeColumn->getData()->getInternalColumn()->get(tadMatrixNode);
-
-    delete tadColumn;
-    delete tadMatrixNode;
-    tadColumn = NULL;
-    tadMatrixNode = NULL;
-
+    Node<TADColumn *> node = NULL;
+    node = headerColumns->get(value);
     return node;
 }
 
-void Matrix::edit(QString archivo, QString nickname, TADMatrixNode *value)
+/***********************************************************************************
+ * MODIFICADORES DE FILA
+ **********************************************************************************/
+bool Matrix::insertRow(TADRow *value)
 {
-    if (archivo != value->getArchivo() && nickname != value->getNickname())
+    if (getRow(value) == NULL)
     {
-        if (get(value->getArchivo(), value->getNickname()) != NULL)
-        {
-            qWarning() << "No se puede sobreescibir un campo existente";
-            return;
-        }
-    }
-
-    MatrixNode *node = remove(archivo, nickname);
-
-    node->getData()->setArchivo(archivo);
-    node->getData()->setNickname(nickname);
-
-    TADColumn *column = new TADColumn(value->getArchivo());
-    TADRow *row = new TADRow(value->getNickname());
-
-    Node<TADColumn *> *nodeColumn = headerColumns->insert(column);
-    Node<TADRow *> *nodeRow = headerRows->insert(row);
-
-    if (nodeColumn->getData()->addInternalColumn(node) != NULL)
-    {
-        if (nodeRow->getData()->addInternalRow(node) != NULL)
-            qInfo() << "Se modificó el nodo :)";
-        else
-        {
-            nodeColumn->getData()->getInternalColumn()->removeOne(value);
-            qWarning() << "No se pudo reposicionar el nodo en la fila :(";
-        }
+        headerRows->insert(value);
+        return true;
     }
     else
-    {
-        delete node;
-        node = NULL;
-        qWarning() << "No se pudo reposicionar el nodo en la columna :(";
-    }
-
-    delete value;
-    value = NULL;
+        return false;
 }
 
-MatrixNode *Matrix::remove(QString archivo, QString nickname)
+Node<TADRow *> *Matrix::getRow(TADRow *value)
 {
-    TADColumn *tadColumn = new TADColumn(archivo);
-    TADRow *tadRow = new TADRow(nickname);
-    TADMatrixNode *tadNode = new TADMatrixNode(archivo, nickname, -1);
+    Node<TADRow *> node = NULL;
+    node = headerRows->get(value);
+    return node;
+}
 
-    Node<TADColumn *> *nodeColumn = headerColumns->get(tadColumn);
-    Node<TADRow *> *nodeRow = headerRows->get(tadRow);
-    MatrixNode *node = NULL;
+/***********************************************************************************
+ * MODIFICADORES DE NODO MATRIZ
+ **********************************************************************************/
+bool Matrix::insertMatrixNode(QString user, QString filename, QString permiso)
+{
+    TADRow *tadRow = new TADRow(user);
+    TADColumn *tadColumn = new TADColumn(filename);
 
-    node = nodeColumn->getData()->getInternalColumn()->removeOne(tadNode);
+    Node<TADRow *> row = getRow(tadRow);
+    Node<TADColumn *> column = getColumn(tadColumn);
 
-    if (node != NULL)
-    {
-        if (nodeColumn->getData()->getInternalColumn()->isEmpty())
-            headerColumns->erase(tadColumn);
+    delete tadRow;
+    delete tadColumn;
 
-        nodeRow->getData()->getInternalRow()->removeOne(tadNode);
+    if (row == NULL || column == NULL)
+        return false;
 
-        if (nodeRow->getData()->getInternalRow()->isEmpty())
-            headerRows->erase(tadRow);
+    TADMatrixNode *tadMatrixNode = new TADMatrixNode(user, filename, permiso);
+    MatrixNode *matrixNode = new MatrixNode(tadMatrixNode);
+    tadRow = row.getData();
+    tadColumn = column.getData();
 
-        return node;
-    }
-    else
-        return NULL;
+    bool sobreescritura = false;
+
+    sobreescritura = tadRow->addInternalRow(matrixNode);
+    sobreescritura = tadColumn->addInternalColumn(matrixNode);
+
+    if (sobreescritura)
+        delete matrixNode;
+
+    tadRow = NULL;
+    tadColumn = NULL;
+    matrixNode = NULL;
+
+    return true;
+}
+
+bool Matrix::eraseMatrixNode(QString user, QString filename)
+{
+    TADRow *tadRow = new TADRow(user);
+    TADColumn *tadColumn = new TADColumn(filename);
+
+    Node<TADRow *> row = getRow(tadRow);
+    Node<TADColumn *> column = getColumn(tadColumn);
+
+    delete tadRow;
+    delete tadColumn;
+
+    if (row == NULL || column = NULL)
+        return false;
+
+    tadRow = row.getData();
+    tadColumn = column.getData();
+    TADMatrixNode *tadMatrixNode = new TADMatrixNode(user, filename, permiso);
+    MatrixNode *matrixNode = NULL;
+
+    tadRow->removeInternalRow(tadMatrixNode);
+    matrixNode = tadColumn->removeInternalColumn(tadMatrixNode);
+
+    if (matrixNode != NULL)
+        delete matrixNode;
+
+    tadRow = NULL;
+    tadColumn = NULL;
+    matrixNode = NULL;
+
+    return true;
+}
+
+QString Matrix::getUserListMatrixNode(QString filename)
+{
+    QString listUserName;
+    TADColumn *tadColumn = new TADColumn(filename);
+    Node<TADColumn *> column = NULL;
+
+    column = getColumn(tadColumn);
 
     delete tadColumn;
-    tadColumn = NULL;
-    delete tadRow;
-    tadRow = NULL;
-    delete tadNode;
-    tadNode = NULL;
+
+    if (column != NULL)
+        return listUserName;
+
+    tadColumn = column.getData();
+
+    listUserName = tadColumn->getList();
+
+    return listUserName;
 }
 
+/***********************************************************************************
+ * OPERADORES
+ **********************************************************************************/
 void Matrix::graph(QString filename)
 {
-    if (headerColumns->isEmpty() && headerRows->isEmpty())
+    if (headerColumns->isEmpty() || headerRows->isEmpty())
         return;
 
     QFile file(filename + ".dot");
@@ -235,4 +241,12 @@ void Matrix::graph(QString filename)
         system(compilarDot.toLatin1().data());
         compilarDot.clear();
     }
+}
+
+void Matrix::clear()
+{
+    qInfo() << "Limpiando memoria de matriz :)";
+    delete headerColumns;
+    delete headerRows;
+    qInfo() << "Memoria de matriz limpia :D";
 }
