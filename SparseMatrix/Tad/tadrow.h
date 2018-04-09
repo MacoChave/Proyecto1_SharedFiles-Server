@@ -12,7 +12,7 @@ class TADRow
 public:
     TADRow();
     TADRow(QString _nombre, QString _correo, QString _nickname, QString _password);
-    TADRow(QString _nombre);
+    TADRow(QString _nickname);
     ~TADRow();
 
     void setNombre(QString value);
@@ -28,7 +28,7 @@ public:
     int comparePass(TADRow *row);
     RowList *getInternalRow();
     MatrixNode *addInternalRow(MatrixNode *value);
-    Matrixnode *removeInternalRow(TADMatrixNode *value);
+    MatrixNode *removeInternalRow(TADMatrixNode *value);
     bool eraseInternalRow(TADMatrixNode *value);
     QString toString();
     QString getNodeName();

@@ -7,7 +7,7 @@ TADMatrixNode::TADMatrixNode()
     permiso = -1;
 }
 
-TADMatrixNode::TADMatrixNode(QString _nickname, QString _archivo, QString _permiso)
+TADMatrixNode::TADMatrixNode(QString _nickname, QString _archivo, int _permiso)
 {
     nickname = _nickname;
     archivo = _archivo;
@@ -56,16 +56,16 @@ int TADMatrixNode::getPermiso()
 QString TADMatrixNode::getPermisoString()
 {
     if (permiso == DUENIO)
-        return "Dueño";
+        return "propietario";
     else if (permiso == EDITAR)
-        return "Editar";
+        return "editar";
     else
-        return "Ver";
+        return "ver";
 }
 
 void TADMatrixNode::setPermiso(QString value)
 {
-    if (value.compare("dueño") == 0)
+    if (value.compare("propietario") == 0)
         setPermiso(DUENIO);
     else if (value.compare("editar") == 0)
         setPermiso(EDITAR);

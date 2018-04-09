@@ -18,11 +18,11 @@ TADRow::TADRow(QString _nombre, QString _correo, QString _nickname, QString _pas
     internalRow = new RowList();
 }
 
-TADRow::TADRow(QString _nombre)
+TADRow::TADRow(QString _nickname)
 {
-    nombre = _nombre;
+    nombre = _nickname;
     correo = "";
-    nickname = "";
+    nickname = _nickname;
     password = "";
     internalRow = new RowList();
 }
@@ -97,7 +97,7 @@ MatrixNode *TADRow::addInternalRow(MatrixNode *value)
     return internalRow->insert(value);
 }
 
-Matrixnode *TADRow::removeInternalRow(TADMatrixNode *value)
+MatrixNode *TADRow::removeInternalRow(TADMatrixNode *value)
 {
     return internalRow->removeOne(value);
 }

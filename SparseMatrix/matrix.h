@@ -21,16 +21,17 @@ public:
     List<TADRow *> *getHeaderRow();
 
     /* MODIFICADORES DE COLUMNA */
-    bool insertColumn(TADColumn *value);
+    void insertColumn(TADColumn *value);
     bool eraseColumn(TADColumn *value);
     Node<TADColumn *> *getColumn(TADColumn *value);
 
     /* MODIFICADORES DE FILA */
-    bool insertRow(TADRow *value);
+    void insertRow(TADRow *value);
     Node<TADRow *> *getRow(TADRow *value);
 
     /* MODIFICADORES DE NODO MATRIZ */
     bool insertMatrixNode(QString user, QString filename, QString permiso);
+    bool insertMatrixNode(QString user, QString filename, int permiso);
     bool eraseMatrixNode(QString user, QString filename);
     QString getUserListMatrixNode(QString filename);
     QString getFileListMatrixNode(QString user);

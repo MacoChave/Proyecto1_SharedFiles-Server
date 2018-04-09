@@ -322,15 +322,6 @@ void MainWindow::actionCreateFile(QStringList value)
     QDate currentDate = QDate::currentDate();
     strCurrentDate = currentDate.toString("yyyy-MM-dd");
 
-    TADColumn *temporalTadColumn = new TADColumn(filename);
-    if (matrix->getHeaderColumn()->get(temporalTadColumn) != NULL)
-    {
-        answer = "Nombre ya existe";
-        producer("CREATEFILE^ERROR");
-
-        return;
-    }
-
     QString filepath("Files/");
     filepath.append(filename);
     filepath.append(".json");
@@ -353,21 +344,17 @@ void MainWindow::actionCreateFile(QStringList value)
         tadColumn->setNickUltimoCambio(currentUserSession->getNickname());
         tadColumn->setFilepath(filepath);
 
-        TADMatrixNode *tadMatrixNode = new TADMatrixNode();
-        tadMatrixNode->setArchivo(filename);
-        tadMatrixNode->setNickname(currentUserSession->getNickname());
-        tadMatrixNode->setPermiso(permission);
-
-        if (matrix->getHeaderColumn()->insert(tadColumn) != NULL)
+        if (matrix->getColumn(tadColumn) != NULL)
         {
-            MatrixNode *matrixNode = NULL;
-            matrixNode = tadColumn->addInternalColumn(tadMatrixNode);
-            currentUserSession->addInternalRow(matrixNode);
-
-            answer = "Archivo creado";
+            answer = "Nombre de archivo ocupado";
+            producer("CREATEFILE^REPETIDO");
+            delete tadColumn;
         }
         else
-            answer = "Archivo no creado";
+        {
+            matrix->insertMatrixNode(currentUserSession->getNickname(), filename, TADMatrixNode::DUENIO);
+            answer = "Archivo creado";
+        }
     }
     else
         answer = "Archivo JSON no creado";
@@ -416,7 +403,14 @@ void MainWindow::actionDeleteFile(QStringList value)
     QString key, request, answer;
     key = "Eliminar archivo";
     request = value[1];
-    answer = "Correcto";
+
+//    TADColumn *tadColumn = new TADColumn(value[1]);
+//    if (matrix->eraseColumn(tadColumn))
+//        answer = "Correcto";
+//    else
+//        answer = "Correcto";
+
+//    delete tadColumn;
 
     setLog(key, request, answer);
 }
@@ -519,7 +513,7 @@ bool MainWindow::loadUserJSON()
         QString pass = jso["clave"].toString();
 
         TADRow *row = new TADRow(nombre, correo, nick, pass);
-        matrix->getHeaderRow()->insert(row);
+        matrix->insertRow(row);
     }
     return true;
 }
@@ -558,21 +552,9 @@ bool MainWindow::loadFilesJSON()
                     );
         column->setTipo(tipo);
 
-        matrix->getHeaderColumn()->insert(column);
+        matrix->insertColumn(column);
 
-        rowTemp = new TADRow();
-        rowTemp->setNickname(nickCreacion);
-        row = matrix->getHeaderRow()->get(rowTemp)->getData();
-
-        delete rowTemp;
-        rowTemp = NULL;
-
-        duenio = new TADMatrixNode(nickCreacion, nombre, -1);
-        duenio->setPermiso(duenio->DUENIO);
-
-        nodo = new MatrixNode(duenio);
-        column->addInternalColumn(nodo);
-        row->addInternalRow(nodo);
+        matrix->insertMatrixNode(nickCreacion, nombre, TADMatrixNode::DUENIO);
 
         for (int j = 0; j < jsaPermiso.count(); j++)
         {
@@ -581,22 +563,7 @@ bool MainWindow::loadFilesJSON()
             QString usuario = jsoPermiso["usuario"].toString();
             QString permiso = jsoPermiso["permiso"].toString();
 
-            TADMatrixNode *tadMatrixNode = new TADMatrixNode(usuario, nombre, -1);
-            if (permiso.compare("editar") == 0)
-                tadMatrixNode->setPermiso(tadMatrixNode->EDITAR);
-            else if (permiso.compare("ver") == 0)
-                tadMatrixNode->setPermiso(tadMatrixNode->VER);
-
-            rowTemp = new TADRow();
-            rowTemp->setNickname(usuario);
-            row = matrix->getHeaderRow()->get(rowTemp)->getData();
-
-            delete rowTemp;
-            rowTemp = NULL;
-
-            nodo = new MatrixNode(tadMatrixNode);
-            column->addInternalColumn(nodo);
-            row->addInternalRow(nodo);
+            matrix->insertMatrixNode(usuario, nombre, permiso);
         }
     }
     return true;

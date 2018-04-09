@@ -38,15 +38,9 @@ List<TADRow *> *Matrix::getHeaderRow()
 /***********************************************************************************
  * MODIFICADORES DE COLUMNA
  **********************************************************************************/
-bool Matrix::insertColumn(TADColumn *value)
+void Matrix::insertColumn(TADColumn *value)
 {
-    if (getColumn(value) == NULL)
-    {
-        headerColumns->insert(value);
-        return true;
-    }
-    else
-        return false;
+    headerColumns->insert(value);
 }
 
 bool Matrix::eraseColumn(TADColumn *value)
@@ -54,13 +48,11 @@ bool Matrix::eraseColumn(TADColumn *value)
     Node<TADColumn *> *node = NULL;
     node = headerColumns->removeOne(value);
     node->getData()->getInternalColumn()->clear();
-
-
 }
 
 Node<TADColumn *> *Matrix::getColumn(TADColumn *value)
 {
-    Node<TADColumn *> node = NULL;
+    Node<TADColumn *> *node = NULL;
     node = headerColumns->get(value);
     return node;
 }
@@ -68,20 +60,17 @@ Node<TADColumn *> *Matrix::getColumn(TADColumn *value)
 /***********************************************************************************
  * MODIFICADORES DE FILA
  **********************************************************************************/
-bool Matrix::insertRow(TADRow *value)
+void Matrix::insertRow(TADRow *value)
 {
     if (getRow(value) == NULL)
     {
         headerRows->insert(value);
-        return true;
     }
-    else
-        return false;
 }
 
 Node<TADRow *> *Matrix::getRow(TADRow *value)
 {
-    Node<TADRow *> node = NULL;
+    Node<TADRow *> *node = NULL;
     node = headerRows->get(value);
     return node;
 }
@@ -89,13 +78,13 @@ Node<TADRow *> *Matrix::getRow(TADRow *value)
 /***********************************************************************************
  * MODIFICADORES DE NODO MATRIZ
  **********************************************************************************/
-bool Matrix::insertMatrixNode(QString user, QString filename, QString permiso)
+bool Matrix::insertMatrixNode(QString user, QString filename, int permiso)
 {
     TADRow *tadRow = new TADRow(user);
     TADColumn *tadColumn = new TADColumn(filename);
 
-    Node<TADRow *> row = getRow(tadRow);
-    Node<TADColumn *> column = getColumn(tadColumn);
+    Node<TADRow *> *row = getRow(tadRow);
+    Node<TADColumn *> *column = getColumn(tadColumn);
 
     delete tadRow;
     delete tadColumn;
@@ -105,13 +94,13 @@ bool Matrix::insertMatrixNode(QString user, QString filename, QString permiso)
 
     TADMatrixNode *tadMatrixNode = new TADMatrixNode(user, filename, permiso);
     MatrixNode *matrixNode = new MatrixNode(tadMatrixNode);
-    tadRow = row.getData();
-    tadColumn = column.getData();
+    tadRow = row->getData();
+    tadColumn = column->getData();
 
     bool sobreescritura = false;
 
-    sobreescritura = tadRow->addInternalRow(matrixNode);
-    sobreescritura = tadColumn->addInternalColumn(matrixNode);
+    sobreescritura = tadRow->addInternalRow(matrixNode) == NULL;
+    sobreescritura = tadColumn->addInternalColumn(matrixNode) == NULL;
 
     if (sobreescritura)
         delete matrixNode;
@@ -123,23 +112,36 @@ bool Matrix::insertMatrixNode(QString user, QString filename, QString permiso)
     return true;
 }
 
+bool Matrix::insertMatrixNode(QString user, QString filename, QString permiso)
+{
+    int codPermiso = 0;
+    if (permiso.compare("propietario") == 0)
+        codPermiso = TADMatrixNode::DUENIO;
+    else if (permiso.compare("editar") == 0)
+        codPermiso = TADMatrixNode::EDITAR;
+    else if (permiso.compare("ver") == 0)
+        codPermiso = TADMatrixNode::VER;
+
+    return insertMatrixNode(user, filename, codPermiso);
+}
+
 bool Matrix::eraseMatrixNode(QString user, QString filename)
 {
     TADRow *tadRow = new TADRow(user);
     TADColumn *tadColumn = new TADColumn(filename);
 
-    Node<TADRow *> row = getRow(tadRow);
-    Node<TADColumn *> column = getColumn(tadColumn);
+    Node<TADRow *> *row = getRow(tadRow);
+    Node<TADColumn *> *column = getColumn(tadColumn);
 
     delete tadRow;
     delete tadColumn;
 
-    if (row == NULL || column = NULL)
+    if (row == NULL || column == NULL)
         return false;
 
-    tadRow = row.getData();
-    tadColumn = column.getData();
-    TADMatrixNode *tadMatrixNode = new TADMatrixNode(user, filename, permiso);
+    tadRow = row->getData();
+    tadColumn = column->getData();
+    TADMatrixNode *tadMatrixNode = new TADMatrixNode(user, filename, 0);
     MatrixNode *matrixNode = NULL;
 
     tadRow->removeInternalRow(tadMatrixNode);
@@ -159,7 +161,7 @@ QString Matrix::getUserListMatrixNode(QString filename)
 {
     QString listUserName;
     TADColumn *tadColumn = new TADColumn(filename);
-    Node<TADColumn *> column = NULL;
+    Node<TADColumn *> *column = NULL;
 
     column = getColumn(tadColumn);
 
@@ -168,7 +170,7 @@ QString Matrix::getUserListMatrixNode(QString filename)
     if (column != NULL)
         return listUserName;
 
-    tadColumn = column.getData();
+    tadColumn = column->getData();
 
     listUserName = tadColumn->getList();
 
