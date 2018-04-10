@@ -95,6 +95,14 @@ void MainWindow::interpreter(QString message)
         actionDeleteFile(lstMsg);
     else if (message.startsWith("CODER"))
         actionCoderImage(lstMsg);
+    else if (message.startsWith("ADDPERMISSION"))
+        actionAddPermission(lstMsg);
+    else if (message.startsWith("DELETEPERMISSION"))
+        actionDeletePermission(lstMsg);
+    else if (message.startsWith("LISTUSER"))
+        actionListUsers();
+    else if (message.startsWith("SHAREDUSER"))
+        actionSharedUsers(lstMsg[1]);
 }
 
 /***********************************************************************************
@@ -190,6 +198,8 @@ void MainWindow::actionLogOut()
 void MainWindow::actionSession()
 {
     QString key, request, answer;
+    key = "Usuario en sesión";
+    request = "Usuario";
 
     if (currentUserSession != NULL)
     {
@@ -421,6 +431,48 @@ void MainWindow::actionCoderImage(QStringList value)
     message.append(coderImage(value[1]));
 
     producer(message);
+}
+
+void MainWindow::actionAddPermission(QStringList value)
+{
+    QString key, request, answer;
+    key = "Agregar Permiso";
+    request = value[1] + ", " + value[2];
+    matrix->insertMatrixNode(value[1], value[2], value[3]);
+
+    answer = "Permiso agregado";
+
+    setLog(key, request, answer);
+}
+
+void MainWindow::actionDeletePermission(QStringList value)
+{
+    QString key, request, answer;
+    key = "Eliminar permiso";
+    request = value[1] + ", " + value[2];
+    matrix->eraseMatrixNode(value[1], value[2]);
+
+    answer = "Permiso eliminado";
+
+    setLog(key, request, answer);
+}
+
+void MainWindow::actionListUsers()
+{
+    QString message("LISTUSER^");
+    message.append(matrix->getListUser());
+
+    producer(message);
+    qDebug() << message;
+}
+
+void MainWindow::actionSharedUsers(QString filename)
+{
+    QString message("SHAREDUSER^");
+    message.append(matrix->getUserListMatrixNode(filename));
+
+    producer(message);
+    qDebug() << message;
 }
 
 void MainWindow::setLog(QString key, QString request, QString answer)

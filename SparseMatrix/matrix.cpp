@@ -68,6 +68,24 @@ void Matrix::insertRow(TADRow *value)
     }
 }
 
+QString Matrix::getListUser()
+{
+    QString users;
+    Node<TADRow *> *node = headerRows->first();
+
+    while (node != NULL)
+    {
+        users.append(node->getData()->getNickname());
+
+        if (node->getNext())
+            users.append("^");
+
+        node = node->getNext();
+    }
+
+    return users;
+}
+
 Node<TADRow *> *Matrix::getRow(TADRow *value)
 {
     Node<TADRow *> *node = NULL;
@@ -115,11 +133,11 @@ bool Matrix::insertMatrixNode(QString user, QString filename, int permiso)
 bool Matrix::insertMatrixNode(QString user, QString filename, QString permiso)
 {
     int codPermiso = 0;
-    if (permiso.compare("propietario") == 0)
+    if (permiso.compare("propietario", Qt::CaseInsensitive) == 0)
         codPermiso = TADMatrixNode::DUENIO;
-    else if (permiso.compare("editar") == 0)
+    else if (permiso.compare("editar", Qt::CaseInsensitive) == 0)
         codPermiso = TADMatrixNode::EDITAR;
-    else if (permiso.compare("ver") == 0)
+    else if (permiso.compare("ver", Qt::CaseInsensitive) == 0)
         codPermiso = TADMatrixNode::VER;
 
     return insertMatrixNode(user, filename, codPermiso);
@@ -159,7 +177,7 @@ bool Matrix::eraseMatrixNode(QString user, QString filename)
 
 QString Matrix::getUserListMatrixNode(QString filename)
 {
-    QString listUserName;
+    QString listUser;
     TADColumn *tadColumn = new TADColumn(filename);
     Node<TADColumn *> *column = NULL;
 
@@ -167,14 +185,17 @@ QString Matrix::getUserListMatrixNode(QString filename)
 
     delete tadColumn;
 
-    if (column != NULL)
-        return listUserName;
+    if (column == NULL)
+    {
+        qDebug() << "No se encontró archivo";
+        return listUser;
+    }
 
     tadColumn = column->getData();
 
-    listUserName = tadColumn->getList();
+    listUser = tadColumn->getList();
 
-    return listUserName;
+    return listUser;
 }
 
 /***********************************************************************************

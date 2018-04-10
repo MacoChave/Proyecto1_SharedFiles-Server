@@ -28,6 +28,7 @@ public:
     /* MODIFICADORES DE FILA */
     void insertRow(TADRow *value);
     Node<TADRow *> *getRow(TADRow *value);
+    QString getListUser();
 
     /* MODIFICADORES DE NODO MATRIZ */
     bool insertMatrixNode(QString user, QString filename, QString permiso);

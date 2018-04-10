@@ -69,7 +69,10 @@ private:
     void actionUpdateFile(QStringList value);
     void actionDeleteFile(QStringList value);
     void actionCoderImage(QStringList value);
-
+    void actionAddPermission(QStringList value);
+    void actionDeletePermission(QStringList value);
+    void actionListUsers();
+    void actionSharedUsers(QString filename);
     void setLog(QString key, QString request, QString answer);
     void loadJSON();
     bool loadUserJSON();

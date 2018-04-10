@@ -253,7 +253,8 @@ QString ColumnList::getList()
 
     while (current != NULL)
     {
-        list.append(current->getData()->getNickname());
+        if (current->getData()->getPermiso() != 0)
+            list.append(current->getData()->getNickname());
 
         if (current->getBottom() != NULL)
             list.append("^");
