@@ -62,8 +62,8 @@ private:
     void actionLogIn(QStringList value);
     void actionLogUp(QStringList value);
     void actionLogOut();
-    void actionSession();
-    void actionListFiles();
+    void actionSession(QStringList value);
+    void actionListFiles(QStringList value);
     void actionInfoFiles(QStringList value);
     void actionCreateFile(QStringList value);
     void actionUpdateFile(QStringList value);

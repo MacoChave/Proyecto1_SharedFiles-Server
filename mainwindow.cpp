@@ -82,9 +82,9 @@ void MainWindow::interpreter(QString message)
     else if (message.startsWith("LOGOUT"))
         actionLogOut();
     else if (message.startsWith("SESSION"))
-        actionSession();
+        actionSession(lstMsg);
     else if (message.startsWith("LISTFILES"))
-        actionListFiles();
+        actionListFiles(lstMsg);
     else if (message.startsWith("INFOFILE"))
         actionInfoFiles(lstMsg);
     else if (message.startsWith("CREATEFILE"))
@@ -195,7 +195,7 @@ void MainWindow::actionLogOut()
     setLog(key, request, answer);
 }
 
-void MainWindow::actionSession()
+void MainWindow::actionSession(QStringList value)
 {
     QString key, request, answer;
     key = "Usuario en sesión";
@@ -209,18 +209,21 @@ void MainWindow::actionSession()
         answer = currentUserSession->getNickname();
     }
     else
+    {
         answer = "Sin usuario activo";
+        producer("SESSION^");
+    }
 
     setLog(key, request, answer);
 }
 
-void MainWindow::actionListFiles()
+void MainWindow::actionListFiles(QStringList value)
 {
     QString key, request, answer;
     key = "Lista de ficheros";
-    request = currentUserSession->getNickname();
+    request = value[1];
 
-    if (currentUserSession == NULL)
+    if (request == NULL)
     {
         request = "Sin usuario activo";
         answer = "Ningún fichero encontrado";
@@ -239,12 +242,15 @@ void MainWindow::actionListFiles()
     /* TEMPORALES */
     Node<TADColumn *> *temporalNodeColumn = NULL;
     TADColumn *temporalTadColumn = NULL;
+    TADRow *temporalTADRow = NULL;
     MatrixNode *temporalMatrixNode = NULL;
     TADMatrixNode *temporalTadMatrixNode = NULL;
 
     /* IGUALAR NODOS TAD TEMPORALES */
+    temporalTADRow = new TADRow(request);
     temporalNodeColumn = matrix->getHeaderColumn()->first();
-    temporalMatrixNode = currentUserSession->getInternalRow()->first();
+    temporalMatrixNode = matrix->getRow(temporalTADRow)->getData()->getInternalRow()->first();
+    delete temporalTADRow;
 
     /* RECORRER NODOS, VALIDANDO PRESENCIA DE USUARIO ACTUAL */
     int countFiles = 0;
@@ -364,10 +370,14 @@ void MainWindow::actionCreateFile(QStringList value)
         {
             matrix->insertMatrixNode(currentUserSession->getNickname(), filename, TADMatrixNode::DUENIO);
             answer = "Archivo creado";
+            producer("CREATEFILE^CORRECTO");
         }
     }
     else
+    {
         answer = "Archivo JSON no creado";
+        producer("CREATEFILE^NOJSON");
+    }
 
     setLog(key, request, answer);
 }
@@ -403,9 +413,13 @@ void MainWindow::actionUpdateFile(QStringList value)
         currentFile->setNickUltimoCambio(currentUserSession->getNickname());
 
         answer = "Archivo actualizado";
+        producer("UPDATEFILE^ACTUALIZADO");
     }
     else
+    {
         answer = "No se encontró archivo";
+        producer("UPDATEFILE^NULLJSON");
+    }
 }
 
 void MainWindow::actionDeleteFile(QStringList value)
@@ -423,6 +437,7 @@ void MainWindow::actionDeleteFile(QStringList value)
 //    delete tadColumn;
 
     setLog(key, request, answer);
+    producer("DELETEFILE^CORRECTO");
 }
 
 void MainWindow::actionCoderImage(QStringList value)
